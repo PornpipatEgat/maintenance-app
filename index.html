@@ -3,88 +3,431 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Maintenance Checksheet - Stable API Edition</title>
+    <title>Smart Maintenance Platform - Enterprise V4</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .page-section { display: none; }
+        .page-section.active { display: block; }
     </style>
 </head>
 <body class="bg-slate-100 min-h-screen font-sans">
 
-    <header class="bg-blue-800 text-white p-4 shadow-md">
-        <div class="container mx-auto">
-            <h1 class="text-xl font-bold">🔧 ระบบใบงานซ่อมบำรุงรักษาอัจฉริยะ (Base64 JSON API)</h1>
-            <p class="text-xs text-blue-200">ระบบเสถียรสูง: แปลง PDF เป็นข้อความแล้วยิงตรงเข้าคลัง Microsoft 365 หมดปัญหาเบราว์เซอร์บล็อกป๊อปอัป</p>
+    <header id="main-nav" class="bg-blue-800 text-white p-4 shadow-md hidden">
+        <div class="container mx-auto flex justify-between items-center">
+            <div>
+                <h1 class="text-lg font-bold">🔧 Smart Maintenance Platform V4</h1>
+                <p class="text-xs text-blue-200">ระบบจัดการตรวจสอบและบันทึกใบงานสายพานลำเลียง (Full Data Auto-Expand)</p>
+            </div>
+            <div class="flex items-center gap-4 text-xs">
+                <span id="user-display-status" class="bg-blue-900 px-3 py-1.5 rounded font-medium"></span>
+                <button onclick="goToGroupSelection()" class="bg-blue-600 hover:bg-blue-700 px-3 py-1.5 rounded transition">🏠 หน้าแรก (เลือกไลน์)</button>
+                <button id="admin-mgmt-btn" onclick="showSection('admin-section')" class="bg-purple-600 hover:bg-purple-700 px-3 py-1.5 rounded transition hidden">👥 จัดการผู้ใช้</button>
+                <button onclick="handleLogout()" class="bg-red-600 hover:bg-red-700 px-3 py-1.5 rounded transition">🚪 ออกจากระบบ</button>
+            </div>
         </div>
     </header>
 
-    <main class="container mx-auto p-4 grid grid-cols-1 lg:grid-cols-2 gap-6">
-        
-        <div class="bg-white p-5 rounded-lg shadow-md border-t-4 border-blue-600">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-md font-bold text-gray-700">🏗️ 1. ปรับแต่งหัวข้อ Check Sheet</h2>
-                <button onclick="addMainTopic()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded text-xs font-semibold transition shadow-sm">
-                    ➕ เพิ่มหัวข้อหลัก
+    <section id="login-section" class="page-section active min-h-screen flex items-center justify-center bg-slate-900 p-4">
+        <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-md border-t-8 border-blue-600">
+            <div class="text-center mb-6">
+                <span class="text-5xl">🛠️</span>
+                <h2 class="text-2xl font-bold text-gray-800 mt-2">เข้าสู่ระบบใบงานอัจฉริยะ</h2>
+                <p class="text-xs text-gray-500 mt-1">Maintenance Engineering Checksheet System</p>
+            </div>
+            <form id="login-form" onsubmit="handleLogin(event)" class="space-y-4 text-sm">
+                <div>
+                    <label class="block text-gray-700 font-semibold mb-1">ชื่อผู้ใช้งาน (Username)</label>
+                    <input type="text" id="login-username" required class="w-full p-2.5 border rounded focus:ring-2 focus:ring-blue-500 outline-none" placeholder="กรอกชื่อผู้ใช้">
+                </div>
+                <div>
+                    <label class="block text-gray-700 font-semibold mb-1">รหัสผ่าน (Password)</label>
+                    <input type="password" id="login-password" required class="w-full p-2.5 border rounded focus:ring-2 focus:ring-blue-500 outline-none" placeholder="กรอกรหัสผ่าน">
+                </div>
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded shadow transition">🔓 ลงชื่อเข้าใช้งาน</button>
+            </form>
+            <div class="mt-4 p-2 bg-slate-50 rounded border text-[11px] text-gray-500 text-center">
+                <strong>Account เริ่มต้นระบบ:</strong><br>
+                Admin: admin / admin1234 | ช่าง: tech01 / 1234
+            </div>
+        </div>
+    </section>
+
+    <section id="admin-section" class="page-section p-6 container mx-auto">
+        <div class="bg-white p-6 rounded-lg shadow-md border-t-4 border-purple-600">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">👥 ระบบจัดการฐานข้อมูลผู้ใช้งาน (Admin Panel)</h2>
+            
+            <form id="user-form" onsubmit="saveUser(event)" class="bg-slate-50 p-4 rounded-lg border mb-6 grid grid-cols-1 md:grid-cols-4 gap-4 text-xs items-end">
+                <input type="hidden" id="user-edit-id">
+                <div>
+                    <label class="block font-semibold text-gray-700 mb-1">Username</label>
+                    <input type="text" id="user-username" required class="w-full p-2 border rounded bg-white">
+                </div>
+                <div>
+                    <label class="block font-semibold text-gray-700 mb-1">Password</label>
+                    <input type="password" id="user-password" required class="w-full p-2 border rounded bg-white">
+                </div>
+                <div>
+                    <label class="block font-semibold text-gray-700 mb-1">สิทธิ์การใช้งาน (Role)</label>
+                    <select id="user-role" class="w-full p-2 border rounded bg-white">
+                        <option value="USER">USER (ช่างหน้างาน)</option>
+                        <option value="ADMIN">ADMIN (วิศวกร/ผู้ดูแล)</option>
+                    </select>
+                </div>
+                <div class="flex gap-2">
+                    <button type="submit" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 rounded shadow">💾 บันทึกผู้ใช้</button>
+                    <button type="button" onclick="clearUserForm()" class="bg-gray-400 hover:bg-gray-500 text-white px-3 py-2 rounded">เคลียร์</button>
+                </div>
+            </form>
+
+            <div class="overflow-x-auto text-xs">
+                <table class="w-full text-left border-collapse border border-gray-200">
+                    <thead>
+                        <tr class="bg-slate-100">
+                            <th class="p-3 border">ID</th>
+                            <th class="p-3 border">Username</th>
+                            <th class="p-3 border">Role</th>
+                            <th class="p-3 border">การจัดการ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="user-table-body"></tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <section id="group-section" class="page-section p-6 container mx-auto">
+        <div class="bg-white p-6 rounded-lg shadow-md border-t-4 border-blue-600 mb-6">
+            <h2 class="text-xl font-bold text-gray-800 text-center mb-2">🏗️ กรุณาเลือกกลุ่มงานและสายพานลำเลียง</h2>
+            <p class="text-xs text-center text-gray-500 mb-6">เลือก Block และกดมุ่งหน้าไปยัง Line ที่ต้องการเข้าตรวจเช็ค</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" id="group-grid-container"></div>
+        </div>
+    </section>
+
+    <section id="job-section" class="page-section p-6 container mx-auto max-w-4xl">
+        <div class="bg-white p-8 rounded-lg shadow-md border-t-4 border-orange-500 text-center">
+            <div class="mb-4">
+                <span class="text-xs bg-blue-100 text-blue-800 font-bold px-3 py-1 rounded-full uppercase tracking-wider">ตำแหน่งที่เลือก: <span id="selected-line-display">-</span></span>
+            </div>
+            <h2 class="text-xl font-bold text-gray-800 mb-6">🎯 โปรดเลือกกลุ่มงานประเภทการซ่อมบำรุง</h2>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                <button onclick="selectJob('งาน PM')" class="p-6 bg-slate-50 hover:bg-orange-50 border border-gray-200 hover:border-orange-400 rounded-xl transition shadow-sm text-center flex flex-col items-center gap-2 group">
+                    <span class="text-3xl group-hover:scale-110 transition">📋</span><span class="font-bold text-gray-700 text-sm">งาน PM</span>
+                </button>
+                <button onclick="selectJob('งานสายพาน')" class="p-6 bg-slate-50 hover:bg-orange-50 border border-gray-200 hover:border-orange-400 rounded-xl transition shadow-sm text-center flex flex-col items-center gap-2 group">
+                    <span class="text-3xl group-hover:scale-110 transition">⛓️</span><span class="font-bold text-gray-700 text-sm">งานสายพาน</span>
+                </button>
+                <button onclick="selectJob('งาน Lube')" class="p-6 bg-slate-50 hover:bg-orange-50 border border-gray-200 hover:border-orange-400 rounded-xl transition shadow-sm text-center flex flex-col items-center gap-2 group">
+                    <span class="text-3xl group-hover:scale-110 transition">🛢️</span><span class="font-bold text-gray-700 text-sm">งาน Lube</span>
+                </button>
+                <button onclick="selectJob('งาน Idlers')" class="p-6 bg-slate-50 hover:bg-orange-50 border border-gray-200 hover:border-orange-400 rounded-xl transition shadow-sm text-center flex flex-col items-center gap-2 group">
+                    <span class="text-3xl group-hover:scale-110 transition">⚙️</span><span class="font-bold text-gray-700 text-sm">งาน Idlers</span>
+                </button>
+                <button onclick="selectJob('งาน Firefighting')" class="p-6 bg-slate-50 hover:bg-orange-50 border border-gray-200 hover:border-orange-400 rounded-xl transition shadow-sm text-center flex flex-col items-center gap-2 group">
+                    <span class="text-3xl group-hover:scale-110 transition">🧯</span><span class="font-bold text-gray-700 text-sm">งาน Firefighting</span>
+                </button>
+                <button onclick="selectJob('งานประกอบ Component')" class="p-6 bg-slate-50 hover:bg-orange-50 border border-gray-200 hover:border-orange-400 rounded-xl transition shadow-sm text-center flex flex-col items-center gap-2 group">
+                    <span class="text-3xl group-hover:scale-110 transition">🧱</span><span class="font-bold text-gray-700 text-sm">งานประกอบ Component</span>
                 </button>
             </div>
-            <div id="builder-container" class="space-y-4 max-h-[68vh] overflow-y-auto pr-1 text-xs">
-                </div>
+        </div>
+    </section>
+
+    <section id="checksheet-section" class="page-section p-4 container mx-auto">
+        <div class="mb-3 flex justify-between items-center bg-white p-3 rounded shadow-sm text-xs">
+            <div>
+                <span class="font-bold text-gray-700">กำลังดำเนินการ:</span> 
+                <span class="bg-blue-100 text-blue-800 font-bold px-2 py-0.5 rounded mx-1" id="final-line-display"></span> / 
+                <span class="bg-orange-100 text-orange-800 font-bold px-2 py-0.5 rounded mx-1" id="final-job-display"></span>
+            </div>
+            <button onclick="goToGroupSelection()" class="text-blue-600 font-bold hover:underline">← ย้อนกลับไปเลือกสายพานใหม่</button>
         </div>
 
-        <div class="bg-white p-5 rounded-lg shadow-md border-t-4 border-orange-500 flex flex-col justify-between">
-            <div>
-                <h2 class="text-md font-bold text-gray-700 mb-3">📄 2. หน้าฟอร์มตรวจเช็คหน้างาน (Preview)</h2>
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            
+            <div id="builder-panel" class="bg-white p-5 rounded-lg shadow-md border-t-4 border-blue-600 lg:col-span-5 hidden">
+                <div class="flex justify-between items-center mb-4">
+                    <div>
+                        <h2 class="text-md font-bold text-gray-700">🏗️ 1. ปรับแต่งเทมเพลต</h2>
+                        <p class="text-[10px] text-gray-400">ระบบจะจำการบันทึกแก้ไขครั้งล่าสุดแยกตามกลุ่มงาน</p>
+                    </div>
+                    <button onclick="addMainTopic()" class="bg-blue-600 hover:bg-blue-700 text-white px-2.5 py-1.5 rounded text-[11px] font-semibold transition shadow-sm">
+                        ➕ เพิ่มหัวข้อหลัก
+                    </button>
+                </div>
                 
-                <div id="pdf-area" class="bg-white p-5 rounded border border-gray-300 shadow-inner">
-                    <div class="border-b-2 border-gray-800 pb-3 mb-4 text-center">
-                        <h3 class="text-lg font-bold text-gray-800 tracking-wide">MAINTENANCE CHECKSHEET REPORT</h3>
-                        <p class="text-[10px] text-gray-500 mt-0.5">รายงานเอกสารผลการตรวจสอบบำรุงรักษาเครื่องจักรและระบบส่งวัสดุ</p>
-                        
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-1 mt-4 text-xs text-gray-600 text-left bg-slate-50 p-2 rounded border border-slate-200">
-                            <div><strong>วันเวลาที่ตรวจเช็ค:</strong> <span id="current-date" class="text-blue-700 font-medium">-</span></div>
-                            <div class="flex items-center gap-1">
-                                <strong>วิศวกรผู้ตรวจเช็ค:</strong> 
-                                <input type="text" id="eng-name" class="border-b border-gray-400 focus:border-blue-500 focus:outline-none w-full px-1 font-semibold text-gray-800 bg-transparent" placeholder="พิมพ์ชื่อ-นามสกุลของคุณ">
+                <div id="builder-container" class="space-y-4 max-h-[60vh] overflow-y-auto pr-1 text-xs"></div>
+
+                <div class="mt-4 pt-3 border-t">
+                    <button onclick="saveTemplateToStorage()" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded text-xs transition shadow">
+                        💾 บันทึกและอัปเดตแบบฟอร์มเทมเพลตล่าสุด
+                    </button>
+                </div>
+            </div>
+
+            <div id="preview-panel" class="bg-white p-5 rounded-lg shadow-md border-t-4 border-orange-500 flex flex-col justify-between lg:col-span-12">
+                <div>
+                    <h2 class="text-md font-bold text-gray-700 mb-3">📄 2. หน้าฟอร์มตรวจเช็คหน้างาน (Preview)</h2>
+                    
+                    <div id="pdf-area" class="bg-white p-5 rounded border border-gray-300 shadow-inner">
+                        <div class="border-b-2 border-gray-800 pb-3 mb-4 text-center">
+                            <h3 class="text-lg font-bold text-gray-800 tracking-wide">MAINTENANCE CHECKSHEET REPORT</h3>
+                            <p class="text-[10px] text-gray-500 mt-0.5">รายงานผลการตรวจสอบบำรุงรักษาเครื่องจักรและระบบส่งวัสดุ</p>
+                            
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-4 text-[11px] text-gray-600 text-left bg-slate-50 p-2 rounded border border-slate-200">
+                                <div><strong>วันเวลาตรวจเช็ค:</strong> <span id="current-date" class="text-blue-700 font-medium">-</span></div>
+                                <div><strong>Line สายพาน:</strong> <span id="pdf-line-display" class="font-bold text-slate-800">-</span></div>
+                                <div><strong>ประเภทกลุ่มงาน:</strong> <span id="pdf-job-display" class="font-bold text-orange-700">-</span></div>
+                                <div class="flex items-center gap-1 sm:col-span-3 border-t pt-1.5 mt-1">
+                                    <strong class="shrink-0">วิศวกรผู้ตรวจเช็ค:</strong> 
+                                    <input type="text" id="eng-name" class="border-b border-gray-400 focus:border-blue-500 focus:outline-none w-full px-1 font-semibold text-gray-800 bg-transparent" placeholder="พิมพ์ชื่อ-นามสกุลของคุณ">
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    <form id="preview-form" class="space-y-4 max-h-[42vh] overflow-y-auto pr-1">
-                        </form>
+                        <form id="preview-form" class="space-y-4 max-h-[42vh] overflow-y-auto pr-1"></form>
+                    </div>
+                </div>
+
+                <div class="mt-4 pt-3 border-t border-gray-200 space-y-3">
+                    <input type="hidden" id="webhook-url" value="https://default5febc69f8e9c4708b70ed8c62be180.5b.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/10cacbfcc3fc4b7a82fbce08fb25d33f/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=qpm4UxBmt4bInZjUyZJpmL9ObkHK--GUGf0AUlqm7ks">
+                    
+                    <button onclick="generateAndUploadViaAPI()" class="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-3.5 px-4 rounded shadow-md transition flex justify-center items-center gap-2 text-sm tracking-wide">
+                        🚀 ส่งใบงานเข้า OneDrive / SharePoint ทันที (Direct API Webhook)
+                    </button>
                 </div>
             </div>
 
-            <div class="mt-4 pt-3 border-t border-gray-200 space-y-3">
-                <input type="hidden" id="webhook-url" 
-                       value="https://default5febc69f8e9c4708b70ed8c62be180.5b.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/10cacbfcc3fc4b7a82fbce08fb25d33f/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=qpm4UxBmt4bInZjUyZJpmL9ObkHK--GUGf0AUlqm7ks">
-                
-                <button onclick="generateAndUploadViaAPI()" class="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-3.5 px-4 rounded shadow-md transition flex justify-center items-center gap-2 text-sm tracking-wide">
-                    🚀 ส่งใบงานเข้า OneDrive / SharePoint ทันที (Direct API Webhook)
-                </button>
-            </div>
         </div>
-
-    </main>
+    </section>
 
     <script>
-        // รันสคริปต์นาฬิกาอัปเดตเวลาบนหัวกระดาษรายงาน
-        setInterval(() => { 
-            document.getElementById('current-date').innerText = new Date().toLocaleString('th-TH'); 
-        }, 1000);
+        let users = [];
+        let currentUser = null;
+        let selectedLine = "";
+        let selectedJob = "";
+        let checksheetData = [];
 
-        // คลังโครงสร้างคำถามตรวจเช็คเครื่องจักรเริ่มต้น
-        let checksheetData = [
-            {
-                id: 'm_1', title: 'ตรวจสอบสายพานลำเลียงหลัก (Main Conveyor)', type: 'checkbox',
-                subTopics: [
-                    { id: 's_1', title: 'ความตึงสายพาน (Belt Tension)', type: 'text_short' },
-                    { id: 's_2', title: 'เสียงมอเตอร์ขับเคลื่อน (Drive Motor)', type: 'checkbox' }
-                ]
+        const lineGroups = {
+            "Group 1": ["L1.6", "L1.5", "L1.4", "L1.3", "L1.2", "L1.1"],
+            "Group 2": ["L2.6", "L2.5", "L2.4", "L2.3", "L2.2", "L2.1"],
+            "Group 3": ["L3.6", "L3.5", "L3.4", "L3.3", "L3.2", "L3.1"],
+            "Group 4": ["L4.6", "L4.5", "L4.4", "L4.3", "L4.2", "L4.1"],
+            "Group 5": ["R3", "S3", "S3.1"],
+            "Group 6": ["R4"],
+            "Group 7": ["R5", "R4.3", "S4", "R4.2", "R4.1"],
+            "Group 8": ["R6", "S5", "S5.1", "R4.4"],
+            "Group 9": ["F1"],
+            "Group 10": ["F2"],
+            "Group 11": ["F3"],
+            "Group 12": ["F4"],
+            "Group 13": ["F5"]
+        };
+
+        window.onload = function() {
+            initUserDatabase();
+            buildGroupNavigationUI();
+            setInterval(() => { 
+                const cd = document.getElementById('current-date');
+                if (cd) cd.innerText = new Date().toLocaleString('th-TH'); 
+            }, 1000);
+        };
+
+        // --- 1. User Database ---
+        function initUserDatabase() {
+            const storedUsers = localStorage.getItem('sm_users');
+            if (storedUsers) {
+                users = JSON.parse(storedUsers);
+            } else {
+                users = [
+                    { id: '1', username: 'admin', password: 'admin1234', role: 'ADMIN' },
+                    { id: '2', username: 'tech01', password: '1234', role: 'USER' }
+                ];
+                localStorage.setItem('sm_users', JSON.stringify(users));
             }
-        ];
+            renderUserTable();
+        }
 
-        // --- ส่วนขับเคลื่อนโครงสร้างและการปรับแต่งแบบฟอร์ม (Form Engine) ---
+        function handleLogin(e) {
+            e.preventDefault();
+            const u = document.getElementById('login-username').value.trim();
+            const p = document.getElementById('login-password').value.trim();
+            
+            const found = users.find(x => x.username === u && x.password === p);
+            if (found) {
+                currentUser = found;
+                document.getElementById('user-display-status').innerText = `👤 ผู้ใช้งาน: ${currentUser.username} (${currentUser.role})`;
+                document.getElementById('main-nav').classList.remove('hidden');
+                
+                if (currentUser.role === 'ADMIN') {
+                    document.getElementById('admin-mgmt-btn').classList.remove('hidden');
+                } else {
+                    document.getElementById('admin-mgmt-btn').classList.add('hidden');
+                }
+                
+                document.getElementById('login-form').reset();
+                goToGroupSelection();
+            } else {
+                alert('❌ ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง กรุณาลองใหม่');
+            }
+        }
+
+        function handleLogout() {
+            currentUser = null; selectedLine = ""; selectedJob = "";
+            document.getElementById('main-nav').classList.add('hidden');
+            showSection('login-section');
+        }
+
+        function renderUserTable() {
+            const tbody = document.getElementById('user-table-body');
+            tbody.innerHTML = '';
+            users.forEach(u => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50";
+                tr.innerHTML = `
+                    <td class="p-3 border">${u.id}</td>
+                    <td class="p-3 border font-semibold">${u.username}</td>
+                    <td class="p-3 border"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${u.role === 'ADMIN' ? 'bg-purple-100 text-purple-800':'bg-green-100 text-green-800'}">${u.role}</span></td>
+                    <td class="p-3 border flex gap-1">
+                        <button onclick="editUser('${u.id}')" class="bg-amber-500 hover:bg-amber-600 text-white px-2 py-1 rounded">✏️ แก้ไข</button>
+                        <button onclick="deleteUser('${u.id}')" class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded">🗑️ ลบ</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function saveUser(e) {
+            e.preventDefault();
+            const id = document.getElementById('user-edit-id').value;
+            const u = document.getElementById('user-username').value.trim();
+            const p = document.getElementById('user-password').value.trim();
+            const r = document.getElementById('user-role').value;
+
+            if (id) {
+                users = users.map(x => x.id === id ? { ...x, username: u, password: p, role: r } : x);
+                alert("แก้ไขข้อมูลผู้ใช้เรียบร้อยครับ");
+            } else {
+                if (users.some(x => x.username === u)) { alert("Username นี้ถูกใช้งานไปแล้วครับ"); return; }
+                users.push({ id: 'user_' + Date.now(), username: u, password: p, role: r });
+                alert("เพิ่มผู้ใช้งานใหม่เรียบร้อยครับ");
+            }
+            localStorage.setItem('sm_users', JSON.stringify(users));
+            clearUserForm(); renderUserTable();
+        }
+
+        function editUser(id) {
+            const target = users.find(x => x.id === id);
+            if (target) {
+                document.getElementById('user-edit-id').value = target.id;
+                document.getElementById('user-username').value = target.username;
+                document.getElementById('user-password').value = target.password;
+                document.getElementById('user-role').value = target.role;
+            }
+        }
+
+        function deleteUser(id) {
+            if (confirm("คุณแน่ใจใช่ไหมที่จะลบผู้ใช้งานรายนี้?")) {
+                users = users.filter(x => x.id !== id);
+                localStorage.setItem('sm_users', JSON.stringify(users));
+                renderUserTable();
+            }
+        }
+
+        function clearUserForm() {
+            document.getElementById('user-form').reset();
+            document.getElementById('user-edit-id').value = '';
+        }
+
+        // --- 2. Navigation Control ---
+        function showSection(id) {
+            document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
+
+        function goToGroupSelection() { showSection('group-section'); }
+
+        function buildGroupNavigationUI() {
+            const container = document.getElementById('group-grid-container');
+            container.innerHTML = '';
+            for (const [groupName, lines] of Object.entries(lineGroups)) {
+                const box = document.createElement('div');
+                box.className = "bg-slate-50 p-4 rounded-lg border border-slate-200 shadow-sm";
+                let lineButtonsHtml = "";
+                lines.forEach(line => {
+                    lineButtonsHtml += `
+                        <button onclick="selectLine('${line}')" class="bg-white hover:bg-blue-600 hover:text-white border border-slate-300 font-bold text-center text-xs p-2 rounded transition shadow-xs">${line}</button>
+                    `;
+                });
+                box.innerHTML = `
+                    <h3 class="font-bold text-blue-800 border-b pb-1 mb-2.5 text-xs flex justify-between items-center">
+                        📁 ${groupName} <span class="text-[10px] bg-blue-100 px-1.5 py-0.5 rounded-full">${lines.length} Line</span>
+                    </h3>
+                    <div class="grid grid-cols-3 gap-1.5">${lineButtonsHtml}</div>
+                `;
+                container.appendChild(box);
+            }
+        }
+
+        function selectLine(lineName) {
+            selectedLine = lineName;
+            document.getElementById('selected-line-display').innerText = selectedLine;
+            showSection('job-section');
+        }
+
+        function selectJob(jobName) {
+            selectedJob = jobName;
+            document.getElementById('final-line-display').innerText = selectedLine;
+            document.getElementById('final-job-display').innerText = selectedJob;
+            document.getElementById('pdf-line-display').innerText = selectedLine;
+            document.getElementById('pdf-job-display').innerText = selectedJob;
+
+            const builderPanel = document.getElementById('builder-panel');
+            const previewPanel = document.getElementById('preview-panel');
+            
+            if (currentUser && currentUser.role === 'ADMIN') {
+                builderPanel.classList.remove('hidden');
+                previewPanel.classList.remove('lg:col-span-12'); previewPanel.classList.add('lg:col-span-7');
+            } else {
+                builderPanel.classList.add('hidden');
+                previewPanel.classList.remove('lg:col-span-7'); previewPanel.classList.add('lg:col-span-12');
+            }
+
+            loadTemplateFromStorage(selectedJob);
+            showSection('checksheet-section');
+        }
+
+        // --- 3. Persistent เทมเพลต ---
+        function loadTemplateFromStorage(jobName) {
+            const localKey = `template_cache_${jobName}`;
+            const cached = localStorage.getItem(localKey);
+            if (cached) {
+                checksheetData = JSON.parse(cached);
+            } else {
+                checksheetData = [
+                    {
+                        id: 'm_init_' + Date.now(), title: `หัวข้อตรวจสอบพื้นฐาน - ${jobName}`, type: 'checkbox',
+                        subTopics: [
+                            { id: 's_init_1', title: 'ตรวจเช็คความผิดปกติภายนอกทั่วไป', type: 'checkbox' },
+                            { id: 's_init_2', title: 'บันทึกหมายเหตุเพิ่มเติมเกี่ยวกับงาน', type: 'text_long' }
+                        ]
+                    }
+                ];
+            }
+            renderBuilder(); renderPreview();
+        }
+
+        function saveTemplateToStorage() {
+            const localKey = `template_cache_${selectedJob}`;
+            localStorage.setItem(localKey, JSON.stringify(checksheetData));
+            alert(`🎉 บันทึกเทมเพลตล่าสุดของ "${selectedJob}" สำเร็จ!`);
+            renderPreview();
+        }
+
+        // --- 4. Form Builder Engine ---
         function addMainTopic() { 
             checksheetData.push({ id: 'main_' + Date.now(), title: 'หัวข้อหลักใหม่', type: 'text_short', subTopics: [] }); 
             renderBuilder(); renderPreview(); 
@@ -95,9 +438,8 @@
         }
         function deleteMainTopic(mainId) { checksheetData = checksheetData.filter(m => m.id !== mainId); renderBuilder(); renderPreview(); }
         function deleteSubTopic(mainId, subId) { const m = checksheetData.find(m => m.id === mainId); if (m) { m.subTopics = m.subTopics.filter(s => s.id !== subId); renderBuilder(); renderPreview(); } }
-        function updateValue(mId, sId, f, v) { const m = checksheetData.find(x => x.id === mId); if (m) { if (sId === null) m[f] = v; else { const s = m.subTopics.find(x => x.id === sId); if (s) s[f] = v; } } renderPreview(); }
+        function updateValue(mId, sId, f, v) { const m = checksheetData.find(x => x.id === mId); if (m) { if (sId === null) m[f] = v; else { const s = m.subTopics.find(x => x.id === sId); if (s) s[f] = v; } } }
 
-        // ฟังก์ชันวาดเครื่องมือจัดการฝั่งซ้าย (Builder)
         function renderBuilder() {
             const c = document.getElementById('builder-container'); c.innerHTML = '';
             checksheetData.forEach((main) => {
@@ -105,7 +447,7 @@
                 div.innerHTML = `
                     <div class="flex gap-1 items-center">
                         <input type="text" value="${main.title}" oninput="updateValue('${main.id}', null, 'title', this.value)" class="flex-1 p-1.5 border rounded text-xs focus:ring-1 focus:ring-blue-500 outline-none">
-                        <select onchange="updateValue('${main.id}', null, 'type', this.value)" class="p-1.5 border rounded bg-white text-[11px] focus:ring-1 focus:ring-blue-500 outline-none">
+                        <select onchange="updateValue('${main.id}', null, 'type', this.value); renderPreview();" class="p-1.5 border rounded bg-white text-[11px] focus:ring-1 focus:ring-blue-500 outline-none">
                             <option value="text_short" ${main.type === 'text_short' ? 'selected' : ''}>Text สั้น</option>
                             <option value="text_long" ${main.type === 'text_long' ? 'selected' : ''}>Text ยาว</option>
                             <option value="checkbox" ${main.type === 'checkbox' ? 'selected' : ''}>Checkbox</option>
@@ -122,7 +464,7 @@
                     const sd = document.createElement('div'); sd.className = 'flex gap-1 items-center bg-white p-1.5 rounded border border-gray-200 shadow-sm';
                     sd.innerHTML = `
                         <input type="text" value="${sub.title}" oninput="updateValue('${main.id}', '${sub.id}', 'title', this.value)" class="flex-1 p-1 border rounded text-[11px] focus:ring-1 focus:ring-blue-500 outline-none">
-                        <select onchange="updateValue('${main.id}', '${sub.id}', 'type', this.value)" class="p-1 border rounded bg-white text-[10px] focus:ring-1 focus:ring-blue-500 outline-none">
+                        <select onchange="updateValue('${main.id}', '${sub.id}', 'type', this.value); renderPreview();" class="p-1 border rounded bg-white text-[10px] focus:ring-1 focus:ring-blue-500 outline-none">
                             <option value="text_short" ${sub.type === 'text_short' ? 'selected' : ''}>Text สั้น</option>
                             <option value="text_long" ${sub.type === 'text_long' ? 'selected' : ''}>Text ยาว</option>
                             <option value="checkbox" ${sub.type === 'checkbox' ? 'selected' : ''}>Checkbox</option>
@@ -134,21 +476,25 @@
             });
         }
 
-        // ฟังก์ชันวาดฟอร์มรับข้อมูลฝั่งขวา (Preview)
         function renderPreview() {
             const f = document.getElementById('preview-form'); f.innerHTML = '<div id="preview-container" class="space-y-3"></div>';
             const pc = document.getElementById('preview-container');
-            if (checksheetData.length === 0) { pc.innerHTML = '<div class="text-gray-400 italic text-center py-8">ไม่มีหัวข้อการตรวจเช็ค กรุณาเพิ่มหัวข้อหลักทางด้านซ้าย</div>'; return; }
+            if (checksheetData.length === 0) { pc.innerHTML = '<div class="text-gray-400 italic text-center py-8">ไม่มีหัวข้อการตรวจเช็ค</div>'; return; }
             checksheetData.forEach((main) => {
-                const div = document.createElement('div'); div.className = "p-3 bg-slate-50 rounded border border-gray-200 shadow-sm";
+                // 🎯 บังคับให้แต่ละ Block ป้องกันการโดนตัดแบ่งครึ่งบรรทัดระหว่างหน้า (Page Break Avoid)
+                const div = document.createElement('div'); 
+                div.className = "p-3 bg-slate-50 rounded border border-gray-200 shadow-sm";
+                div.setAttribute("style", "page-break-inside: avoid; break-inside: avoid;");
+                
                 let mHtml = getInputHtml(main.id, main.title, main.type, 'main');
                 let sHtml = '';
-                main.subTopics.forEach(sub => { sHtml += `<div class="pl-4 mt-2 pt-2 border-t border-gray-200">${getInputHtml(sub.id, sub.title, sub.type, 'sub')}</div>`; });
+                main.subTopics.forEach(sub => { 
+                    sHtml += `<div class="pl-4 mt-2 pt-2 border-t border-gray-200" style="page-break-inside: avoid; break-inside: avoid;">${getInputHtml(sub.id, sub.title, sub.type, 'sub')}</div>`; 
+                });
                 div.innerHTML = mHtml + sHtml; pc.appendChild(div);
             });
         }
 
-        // ตัวคุมหน้าตาฟิลด์กรอกข้อมูล
         function getInputHtml(id, title, type, level) {
             const lbl = level === 'main' ? 'block font-semibold text-gray-800 text-xs' : 'block text-gray-600 text-[11px]';
             if (type === 'text_short') return `<label class="${lbl}">${title}</label><input type="text" name="${id}" class="w-full p-1.5 border rounded bg-white text-xs mt-1 focus:ring-1 focus:ring-orange-400 outline-none">`;
@@ -157,70 +503,139 @@
             return '';
         }
 
-        // ====================================================================
-        // 🚀 ฟังก์ชันหลัก: แปลงเป็นรหัสสากล JSON Base64 แล้วส่งลุย API ทันที
-        // ====================================================================
+        // --- 5. ฟังก์ชัน Flatten DOM + ปลดล็อก Scrollbar ซ่อนข้อความ + ยิง API (สมบูรณ์ 100%) ---
         function generateAndUploadViaAPI() {
             const engineer = document.getElementById('eng-name').value.trim();
             const webhookUrl = document.getElementById('webhook-url').value.trim();
 
             if (!engineer) { 
-                alert("⚠️ ปฏิเสธการบันทึก: กรุณากรอกชื่อวิศวกรผู้ตรวจเช็คตรงหัวใบงานฝั่งขวาก่อนส่งออกไฟล์ครับ"); 
+                alert("⚠️ ปฏิเสธการบันทึก: กรุณากรอกชื่อวิศวกรผู้ตรวจเช็คก่อนส่งออกไฟล์ครับ"); 
                 return; 
             }
 
-            const element = document.getElementById('pdf-area');
-            const dateStr = new Date().toISOString().slice(0,10); // คืนค่าฟอร์แมตวันที่สากล YYYY-MM-DD
-            const fileName = `Report_${dateStr}_${engineer.replace(/\s+/g, '_')}.pdf`;
+            const dateStr = new Date().toISOString().slice(0,10);
+            const fileName = `Checksheet_${selectedLine}_${dateStr}_${selectedJob}.pdf`;
 
-            // กำหนดความคมชัดของหน้ากระดาษรายงาน
+            // ระบบเช็คไฟล์ซ้ำใน LocalHistory
+            let fileHistory = JSON.parse(localStorage.getItem('sm_file_history') || '[]');
+            let isOverwrite = false;
+
+            if (fileHistory.includes(fileName)) {
+                const confirmOverwrite = confirm(`⚠️ แจ้งเตือนไฟล์ซ้ำ: ไฟล์ "${fileName}" นี้เคยถูกบันทึกเข้าระบบไปแล้วในวันนี้ครับ\n\nคุณต้องการยืนยันบันทึกไฟล์ซ้ำใหม่เพื่อเขียนทับ (Overwrite) ไฟล์เดิมใน SharePoint หรือไม่?`);
+                if (!confirmOverwrite) {
+                    alert("🚫 ยกเลิกการนำส่งข้อมูลเรียบร้อย");
+                    return; 
+                }
+                isOverwrite = true;
+            }
+
+            alert("🔄 ระบบกำลังทำการขยายข้อมูล (Unlocking Scrollbars) และดึงเนื้อหาทั้งหมดเพื่อเจนเข้า PDF หน้าถัดไปให้อัตโนมัติ...");
+
+            // โคลนเอกสารเพื่อเอามาประมวลผลหลังบ้าน
+            const originalElement = document.getElementById('pdf-area');
+            const clonedElement = originalElement.cloneNode(true);
+
+            const originalInputs = originalElement.querySelectorAll('input, textarea');
+            const clonedInputs = clonedElement.querySelectorAll('input, textarea');
+
+            originalInputs.forEach((origInput, index) => {
+                const targetClone = clonedInputs[index];
+                if (!targetClone) return;
+                
+                const parent = targetClone.parentNode;
+                
+                if (origInput.type === 'checkbox') {
+                    const badge = document.createElement('span');
+                    badge.className = origInput.checked ? "text-green-600 font-bold text-xs" : "text-red-500 font-bold text-xs";
+                    badge.innerText = origInput.checked ? " ☑️ [ปกติ / ผ่าน] " : " 🔲 [ชำรุด / ไม่ผ่าน] ";
+                    parent.replaceChild(badge, targetClone);
+                } else {
+                    // แปลง Input/Textarea เป็นบล็อกข้อความธรรมดา รองรับข้อความยาวและการเคาะขึ้นบรรทัดใหม่
+                    const txtDiv = document.createElement('div');
+                    txtDiv.className = "p-1.5 bg-slate-50 border-b border-gray-300 text-xs text-gray-800 whitespace-pre-wrap w-full break-words";
+                    txtDiv.style.height = "auto";
+                    txtDiv.style.maxHeight = "none";
+                    txtDiv.style.overflow = "visible";
+                    txtDiv.innerText = origInput.value.trim() || "-";
+                    parent.replaceChild(txtDiv, targetClone);
+                }
+            });
+
+            // 🔥 [จุดแก้ไขเด็ดขาดเพื่อแก้ปัญหาค้างใน Scrollbar]:
+            // ปลดล็อกการจำกัดความสูงและสั่งแสดงผลแบบ Overflow Visible แก่ทุก Container ย่อยในแผ่นงานโคลน
+            clonedElement.style.height = "auto";
+            clonedElement.style.maxHeight = "none";
+            clonedElement.style.overflow = "visible";
+
+            const clonedForm = clonedElement.querySelector('#preview-form');
+            if (clonedForm) {
+                clonedForm.style.height = "auto";
+                clonedForm.style.maxHeight = "none";
+                clonedForm.style.overflow = "visible";
+                clonedForm.classList.remove('max-h-[42vh]', 'overflow-y-auto');
+            }
+            
+            const clonedContainer = clonedElement.querySelector('#preview-container');
+            if (clonedContainer) {
+                clonedContainer.style.height = "auto";
+                clonedContainer.style.maxHeight = "none";
+                clonedContainer.style.overflow = "visible";
+            }
+
+            // นำตัวโคลนไปติดบน DOM แบบซ่อนสายตาผู้ใช้เพื่อให้เอนจิ้นคำนวณส่วนขยายได้เต็มที่
+            clonedElement.style.position = 'absolute';
+            clonedElement.style.top = '0';
+            clonedElement.style.left = '0';
+            clonedElement.style.zIndex = '-9999';
+            clonedElement.style.width = '190mm'; // ล็อกความกว้างหน้ากระดาษ A4 มาตรฐาน
+            clonedElement.style.opacity = '1';
+            document.body.appendChild(clonedElement);
+
+            // คอนฟิกการแยกหน้าอัตโนมัติเมื่อข้อมูลล้น (Multi-page Smart Breaks)
             const pdfConfig = {
                 margin:       10,
                 filename:     fileName,
-                image:        { type: 'jpeg', quality: 0.95 },
-                html2canvas:  { scale: 1.5, useCORS: true },
-                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true, logging: false, scrollY: 0 },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
             };
 
-            alert("🔄 ระบบกำลังประมวลผลแปลงใบงานเป็นรหัสข้อความ Base64 และส่งหลังบ้านผ่าน API ตรงเข้าสู่ Power Automate...");
+            // ดำเนินการแคปเอกสารตัวโคลนที่ถูก Unlocked ข้อมูลแล้ว
+            html2pdf().set(pdfConfig).from(clonedElement).toPdf().output('datauristring').then(function(pdfBase64Text) {
+                // ลบตัวโคลนทิ้งทันทีเมื่อทำงานเสร็จ
+                document.body.removeChild(clonedElement);
 
-            // 1. เจน PDF ออกมาเป็นรูปแบบข้อความสากล Data URL Base64
-            html2pdf().set(pdfConfig).from(element).toPdf().output('datauristring').then(function(pdfBase64Text) {
-                
-                // หั่นเอาเฉพาะเนื้อรหัส Base64 บริสุทธิ์ (ตัดพาร์ทหัวเว็บประทับตราออก)
                 const pureBase64 = pdfBase64Text.split(',')[1];
-
-                // 2. มัดรวมเข้าถุง JSON วาลูคู่สัญญาแบบคลีน ๆ
+                
                 const jsonPayload = {
                     filename: fileName,
-                    filecontent: pureBase64
+                    filecontent: pureBase64,
+                    overwrite: isOverwrite
                 };
 
-                // 3. ยิง HTTP POST API แบบ Application/JSON ตรงเข้าท่อ Webhook ทันที
                 fetch(webhookUrl, {
                     method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
+                    headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(jsonPayload)
                 })
                 .then(response => {
                     if (response.ok) {
-                        alert(`🎉 นำส่งข้อมูลสำเร็จ!\nใบงานตรวจเช็คถูกส่งผ่านรหัส API เรียบร้อย โปรดตรวจสอบสถานะการรับของที่กล่อง SharePoint ครับ`);
+                        if (!fileHistory.includes(fileName)) {
+                            fileHistory.push(fileName);
+                            localStorage.setItem('sm_file_history', JSON.stringify(fileHistory));
+                        }
+                        alert(`🎉 นำส่งสำเร็จ!\nบันทึกไฟล์เรียบร้อย: ${fileName}\n(สถานะ: ${isOverwrite ? 'เขียนทับไฟล์เดิม':'บันทึกไฟล์ใหม่สะสม'})`);
                     } else {
-                        alert("❌ เกิดข้อผิดพลาด: เซิร์ฟเวอร์ปลายทางปฏิเสธโครงสร้างข้อความ JSON");
+                        alert("❌ เกิดข้อผิดพลาด: เซิร์ฟเวอร์ปฏิเสธโครงสร้างข้อความ JSON");
                     }
                 })
                 .catch(error => {
-                    console.error("Transmission Error: ", error);
-                    alert("❌ ไม่สามารถติดต่อเซิร์ฟเวอร์ปลายทางได้ (โปรดตรวจสอบสัญญาณอินเทอร์เน็ตหน้างาน)");
+                    console.error("Error: ", error);
+                    alert("❌ ติดต่อเซิร์ฟเวอร์ไม่ได้ โปรดตรวจสอบอินเทอร์เน็ตหน้างาน");
                 });
             });
         }
-
-        // เริ่มต้นรันหน้าจอเครื่องมือระบบตั้งแต่เปิดเว็บครั้งแรก
-        renderBuilder(); 
-        renderPreview();
     </script>
 </body>
 </html>
