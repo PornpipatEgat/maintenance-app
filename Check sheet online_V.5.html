@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Maintenance Checksheet (Direct Cloud Save)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-100 min-h-screen font-sans">
+
+    <header class="bg-blue-700 text-white p-4 shadow-md">
+        <div class="container mx-auto">
+            <h1 class="text-xl font-bold">🔧 ระบบใบงานซ่อมบำรุงรักษาและจัดการ Checksheet ออนไลน์</h1>
+            <p class="text-xs text-blue-200">สร้างใบงาน PDF ในเครื่อง และเลือก Directory เซฟลง OneDrive / Shared Folder ได้อย่างอิสระ</p>
+        </div>
+    </header>
+
+    <main class="container mx-auto p-4 grid grid-cols-1 lg:grid-cols-2 gap-6">
+        
+        <div class="bg-white p-5 rounded-lg shadow-md border-t-4 border-blue-600">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-md font-bold text-gray-700 flex items-center gap-1">🏗️ 1. ปรับแต่งหัวข้อ Check Sheet</h2>
+                <button onclick="addMainTopic()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded text-xs font-semibold transition shadow-sm">
+                    ➕ เพิ่มหัวข้อหลัก
+                </button>
+            </div>
+            <div id="builder-container" class="space-y-4 max-h-[68vh] overflow-y-auto pr-1 text-xs">
+                </div>
+        </div>
+
+        <div class="bg-white p-5 rounded-lg shadow-md border-t-4 border-orange-500 flex flex-col justify-between">
+            <div>
+                <h2 class="text-md font-bold text-gray-700 mb-3">📄 2. หน้าฟอร์มตรวจเช็คหน้างาน (Preview)</h2>
+                
+                <div id="pdf-area" class="bg-white p-5 rounded border border-gray-300 shadow-inner">
+                    <div class="border-b-2 border-gray-800 pb-3 mb-4 text-center">
+                        <h3 class="text-lg font-bold text-gray-800 tracking-wide">MAINTENANCE CHECKSHEET REPORT</h3>
+                        <p class="text-[10px] text-gray-500 mt-0.5">รายงานผลการตรวจสอบและบำรุงรักษาอุปกรณ์ระบบขนส่งวัสดุ</p>
+                        
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-1 mt-4 text-xs text-gray-600 text-left bg-slate-50 p-2 rounded border border-slate-200">
+                            <div><strong>วันเวลาที่ตรวจเช็ค:</strong> <span id="current-date" class="text-blue-700 font-medium">-</span></div>
+                            <div class="flex items-center gap-1">
+                                <strong>วิศวกรผู้ตรวจเช็ค:</strong> 
+                                <input type="text" id="eng-name" class="border-b border-gray-400 focus:border-blue-500 focus:outline-none w-full px-1 font-semibold text-gray-800 bg-transparent" placeholder="พิมพ์ชื่อ-นามสกุลของคุณ">
+                            </div>
+                        </div>
+                    </div>
+
+                    <form id="preview-form" class="space-y-4 max-h-[42vh] overflow-y-auto pr-1">
+                        </form>
+                </div>
+            </div>
+
+            <div class="mt-4 pt-3 border-t border-gray-200">
+                <button onclick="generateAndSavePDF()" class="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-3.5 px-4 rounded shadow-md transition flex justify-center items-center gap-2 text-sm tracking-wide">
+                    💾 ประมวลผลใบงาน PDF & เลือกโฟลเดอร์ OneDrive เซฟทันที
+                </button>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        // ฟังก์ชันอัปเดตวันเวลาแบบสดๆ บนหน้าจอใบงาน
+        setInterval(() => { 
+            document.getElementById('current-date').innerText = new Date().toLocaleString('th-TH'); 
+        }, 1000);
+
+        // โครงสร้างข้อมูลตั้งต้น (จำลองระบบสายพานลำเลียงยอดนิยมมาให้เลยครับ)
+        let checksheetData = [
+            {
+                id: 'm_1', title: 'ตรวจสอบสายพานลำเลียงหลัก (Main Conveyor)', type: 'checkbox',
+                subTopics: [
+                    { id: 's_1', title: 'ความตึงสายพาน (Belt Tension)', type: 'text_short' },
+                    { id: 's_2', title: 'เสียงมอเตอร์ขับเคลื่อน (Drive Motor)', type: 'checkbox' }
+                ]
+            }
+        ];
+
+        // --- โซนฟังก์ชันจัดการโครงสร้างแบบฟอร์ม (Form Builder) ---
+        function addMainTopic() { 
+            checksheetData.push({ id: 'main_' + Date.now(), title: 'หัวข้อหลักใหม่', type: 'text_short', subTopics: [] }); 
+            renderBuilder(); renderPreview(); 
+        }
+        function addSubTopic(mainId) { 
+            const m = checksheetData.find(m => m.id === mainId); 
+            if (m) { m.subTopics.push({ id: 'sub_' + Date.now(), title: 'หัวข้อย่อยใหม่', type: 'text_short' }); renderBuilder(); renderPreview(); } 
+        }
+        function deleteMainTopic(mainId) { checksheetData = checksheetData.filter(m => m.id !== mainId); renderBuilder(); renderPreview(); }
+        function deleteSubTopic(mainId, subId) { const m = checksheetData.find(m => m.id === mainId); if (m) { m.subTopics = m.subTopics.filter(s => s.id !== subId); renderBuilder(); renderPreview(); } }
+        function updateValue(mId, sId, f, v) { const m = checksheetData.find(x => x.id === mId); if (m) { if (sId === null) m[f] = v; else { const s = m.subTopics.find(x => x.id === sId); if (s) s[f] = v; } } renderPreview(); }
+
+        // ฟังก์ชันวาดหน้าต่างควบคุมฝั่งซ้าย (Builder)
+        function renderBuilder() {
+            const c = document.getElementById('builder-container'); c.innerHTML = '';
+            checksheetData.forEach((main) => {
+                const div = document.createElement('div'); div.className = 'bg-gray-50 p-3 rounded-lg border border-gray-300 space-y-2 shadow-sm';
+                div.innerHTML = `
+                    <div class="flex gap-1 items-center">
+                        <input type="text" value="${main.title}" oninput="updateValue('${main.id}', null, 'title', this.value)" class="flex-1 p-1.5 border rounded text-xs focus:ring-1 focus:ring-blue-500 outline-none">
+                        <select onchange="updateValue('${main.id}', null, 'type', this.value)" class="p-1.5 border rounded bg-white text-[11px] focus:ring-1 focus:ring-blue-500 outline-none">
+                            <option value="text_short" ${main.type === 'text_short' ? 'selected' : ''}>Text สั้น</option>
+                            <option value="text_long" ${main.type === 'text_long' ? 'selected' : ''}>Text ยาว</option>
+                            <option value="checkbox" ${main.type === 'checkbox' ? 'selected' : ''}>Checkbox</option>
+                        </select>
+                        <button onclick="deleteMainTopic('${main.id}')" class="text-red-500 font-bold px-2 hover:text-red-700 text-sm">🗑️</button>
+                    </div>
+                    <div class="pl-4 border-l-2 border-dashed border-gray-300 space-y-1.5" id="sub-b-${main.id}"></div>
+                    <button onclick="addSubTopic('${main.id}')" class="text-[10px] text-blue-600 hover:text-blue-800 font-semibold block pl-4 mt-1">➕ เพิ่มหัวข้อย่อย (Sub title)</button>
+                `;
+                c.appendChild(div);
+                
+                const sc = document.getElementById(`sub-b-${main.id}`);
+                main.subTopics.forEach((sub) => {
+                    const sd = document.createElement('div'); sd.className = 'flex gap-1 items-center bg-white p-1.5 rounded border border-gray-200 shadow-sm';
+                    sd.innerHTML = `
+                        <input type="text" value="${sub.title}" oninput="updateValue('${main.id}', '${sub.id}', 'title', this.value)" class="flex-1 p-1 border rounded text-[11px] focus:ring-1 focus:ring-blue-500 outline-none">
+                        <select onchange="updateValue('${main.id}', '${sub.id}', 'type', this.value)" class="p-1 border rounded bg-white text-[10px] focus:ring-1 focus:ring-blue-500 outline-none">
+                            <option value="text_short" ${sub.type === 'text_short' ? 'selected' : ''}>Text สั้น</option>
+                            <option value="text_long" ${sub.type === 'text_long' ? 'selected' : ''}>Text ยาว</option>
+                            <option value="checkbox" ${sub.type === 'checkbox' ? 'selected' : ''}>Checkbox</option>
+                        </select>
+                        <button onclick="deleteSubTopic('${main.id}', '${sub.id}')" class="text-red-400 hover:text-red-600 text-xs px-1">🗑️</button>
+                    `;
+                    sc.appendChild(sd);
+                });
+            });
+        }
+
+        // ฟังก์ชันวาดหน้าตาแบบฟอร์มฝั่งขวา (Preview ใบงานจริง)
+        function renderPreview() {
+            const f = document.getElementById('preview-form'); f.innerHTML = '<div id="preview-container" class="space-y-3"></div>';
+            const pc = document.getElementById('preview-container');
+            if (checksheetData.length === 0) { pc.innerHTML = '<div class="text-gray-400 italic text-center py-8">ไม่มีหัวข้อการตรวจเช็ค กรุณาเพิ่มหัวข้อหลักทางด้านซ้าย</div>'; return; }
+            checksheetData.forEach((main) => {
+                const div = document.createElement('div'); div.className = "p-3 bg-slate-50 rounded border border-gray-200 shadow-sm";
+                let mHtml = getInputHtml(main.id, main.title, main.type, 'main');
+                let sHtml = '';
+                main.subTopics.forEach(sub => { sHtml += `<div class="pl-4 mt-2 pt-2 border-t border-gray-200">${getInputHtml(sub.id, sub.title, sub.type, 'sub')}</div>`; });
+                div.innerHTML = mHtml + sHtml; pc.appendChild(div);
+            });
+        }
+
+        // ฟังก์ชันตัวสลับเจเนอเรตหน้าตา Input ฟิลด์
+        function getInputHtml(id, title, type, level) {
+            const lbl = level === 'main' ? 'block font-semibold text-gray-800 text-xs' : 'block text-gray-600 text-[11px]';
+            if (type === 'text_short') return `<label class="${lbl}">${title}</label><input type="text" name="${id}" class="w-full p-1.5 border rounded bg-white text-xs mt-1 focus:ring-1 focus:ring-orange-400 outline-none">`;
+            if (type === 'text_long') return `<label class="${lbl}">${title}</label><textarea name="${id}" rows="2" class="w-full p-1.5 border rounded bg-white text-xs mt-1 focus:ring-1 focus:ring-orange-400 outline-none" placeholder="ระบุรายละเอียด..."></textarea>`;
+            if (type === 'checkbox') return `<div class="flex items-center gap-2 py-0.5"><input type="checkbox" id="${id}" name="${id}" class="w-4 h-4 rounded text-orange-500 border-gray-300 focus:ring-orange-400"><label for="${id}" class="${lbl} cursor-pointer">${title} <span class="text-green-600 font-normal text-[10px]">(ปกติ / ผ่าน)</span></label></div>`;
+            return '';
+        }
+
+        // ====================================================================
+        // 🔥 ฟังก์ชันหลักวิธีที่ 1: เจนไฟล์ PDF และปลุกระบบค้นหา Directory สู่คลาวด์ไดรฟ์
+        // ====================================================================
+        function generateAndSavePDF() {
+            const engineer = document.getElementById('eng-name').value.trim();
+            if (!engineer) { 
+                alert("⚠️ ปฏิเสธการบันทึก: กรุณากรอกชื่อวิศวกรผู้ตรวจเช็คก่อนส่งออกไฟล์ทุกครั้งครับ"); 
+                return; 
+            }
+
+            const element = document.getElementById('pdf-area');
+            const dateStr = new Date().toISOString().slice(0,10); // จะได้ฟอร์แมต YYYY-MM-DD
+            const fileName = `Maintenance_Report_${dateStr}_${engineer}.pdf`;
+
+            // กำหนดสเปกกระดาษใบงานซ่อมบำรุง (ขนาด A4 แนวตั้ง พอดีกรอบ)
+            const pdfConfig = {
+                margin:       10,
+                filename:     fileName,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            alert("🔄 แอปพลิเคชันกำลังเรนเดอร์เอกสารโครงสร้างใบงานซ่อมบำรุงรักษา...\nเมื่อระบบประมวลผลเสร็จ หน้าต่าง File Explorer จะเด้งขึ้นมาเพื่อให้ท่านเลือกบันทึกตรงเข้าคลังโฟลเดอร์ OneDrive ทันทีครับ");
+
+            // ดำเนินการสร้าง PDF และสั่ง .save() เพื่อกระตุ้นตัวรับค่า Directory ของตัวเครื่อง
+            html2pdf().set(pdfConfig).from(element).save().then(() => {
+                console.log("PDF Generation complete, trigger directory system successfully.");
+            });
+        }
+
+        // สั่งให้ระบบวาดข้อมูลฟอร์มสายพานจำลองขึ้นมาแสดงตั้งแต่เปิดเว็บครั้งแรก
+        renderBuilder(); 
+        renderPreview();
+    </script>
+</body>
+</html>
