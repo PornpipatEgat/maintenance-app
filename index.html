@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Maintenance Checksheet - API Edition</title>
+    <title>Smart Maintenance Checksheet - Stable API Edition</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
@@ -14,8 +14,8 @@
 
     <header class="bg-blue-800 text-white p-4 shadow-md">
         <div class="container mx-auto">
-            <h1 class="text-xl font-bold">🔧 ระบบใบงานซ่อมบำรุงรักษาอัจฉริยะ (Direct API Upload)</h1>
-            <p class="text-xs text-blue-200">ประมวลผล PDF และส่งไฟล์ผ่าน API Webhook ตรงเข้าคลังโฟลเดอร์ Microsoft 365</p>
+            <h1 class="text-xl font-bold">🔧 ระบบใบงานซ่อมบำรุงรักษาอัจฉริยะ (Base64 JSON API)</h1>
+            <p class="text-xs text-blue-200">ระบบเสถียรสูง: แปลง PDF เป็นข้อความแล้วยิงตรงเข้าคลัง Microsoft 365 หมดปัญหาเบราว์เซอร์บล็อกป๊อปอัป</p>
         </div>
     </header>
 
@@ -158,7 +158,7 @@
         }
 
         // ====================================================================
-        // 🚀 ฟังก์ชันหลัก: ประมวลผลเป็น PDF ยิงส่งตรงข้ามระบบด้วย API (No Pop-up)
+        // 🚀 ฟังก์ชันหลัก: แปลงเป็นรหัสสากล JSON Base64 แล้วส่งลุย API ทันที
         // ====================================================================
         function generateAndUploadViaAPI() {
             const engineer = document.getElementById('eng-name').value.trim();
@@ -173,7 +173,7 @@
             const dateStr = new Date().toISOString().slice(0,10); // คืนค่าฟอร์แมตวันที่สากล YYYY-MM-DD
             const fileName = `Report_${dateStr}_${engineer.replace(/\s+/g, '_')}.pdf`;
 
-            // กำหนดความคมชัดและขนาดของหน้ากระดาษรายงาน (A4 แนวตั้ง คมชัดระดับ 1.5 เท่า)
+            // กำหนดความคมชัดของหน้ากระดาษรายงาน
             const pdfConfig = {
                 margin:       10,
                 filename:     fileName,
@@ -182,25 +182,33 @@
                 jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
             };
 
-            alert("🔄 ระบบกำลังประมวลผลแปลงใบงานซ่อมบำรุงรักษาเป็นเอกสาร PDF และส่งผ่าน API ตรงเข้าสู่เซิร์ฟเวอร์ Microsoft 365 หลังบ้าน...");
+            alert("🔄 ระบบกำลังประมวลผลแปลงใบงานเป็นรหัสข้อความ Base64 และส่งหลังบ้านผ่าน API ตรงเข้าสู่ Power Automate...");
 
-            // 1. สั่งประมวลผลหน้าฟอร์มให้กลายเป็นก้อนข้อมูลไฟล์ PDF ไบนารี (Blob)
-            html2pdf().set(pdfConfig).from(element).toPdf().output('blob').then(function(pdfBlob) {
+            // 1. เจน PDF ออกมาเป็นรูปแบบข้อความสากล Data URL Base64
+            html2pdf().set(pdfConfig).from(element).toPdf().output('datauristring').then(function(pdfBase64Text) {
                 
-                // 2. แพ็กไฟล์ PDF เข้าสู่กล่องนำส่งข้อมูลรูปแบบ HTTP Multipart FormData
-                let dataPackage = new FormData();
-                dataPackage.append("file", pdfBlob, fileName);
+                // หั่นเอาเฉพาะเนื้อรหัส Base64 บริสุทธิ์ (ตัดพาร์ทหัวเว็บประทับตราออก)
+                const pureBase64 = pdfBase64Text.split(',')[1];
 
-                // 3. ใช้คำสั่ง Fetch ยิงข้อมูลตรงเข้าท่อ Webhook ปลายทางโดยตรงโดยไม่ต้องมีป๊อปอัปเด้งถาม
+                // 2. มัดรวมเข้าถุง JSON วาลูคู่สัญญาแบบคลีน ๆ
+                const jsonPayload = {
+                    filename: fileName,
+                    filecontent: pureBase64
+                };
+
+                // 3. ยิง HTTP POST API แบบ Application/JSON ตรงเข้าท่อ Webhook ทันที
                 fetch(webhookUrl, {
                     method: "POST",
-                    body: dataPackage
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(jsonPayload)
                 })
                 .then(response => {
                     if (response.ok) {
-                        alert(`🎉 นำส่งข้อมูลสำเร็จ!\nใบงานตรวจเช็ค "${fileName}" ถูกส่งผ่านระบบ API และจัดเก็บเข้าสู่คลังเอกสารเรียบร้อยแล้วครับ`);
+                        alert(`🎉 นำส่งข้อมูลสำเร็จ!\nใบงานตรวจเช็คถูกส่งผ่านรหัส API เรียบร้อย โปรดตรวจสอบสถานะการรับของที่กล่อง SharePoint ครับ`);
                     } else {
-                        alert("❌ เกิดข้อผิดพลาดทางเทคนิค: ตัวรับค่าของ Power Automate ปฏิเสธการรับก้อนข้อมูล (โปรดเช็คความถูกต้องของโครงสร้างสิทธิ์รับไฟล์)");
+                        alert("❌ เกิดข้อผิดพลาด: เซิร์ฟเวอร์ปลายทางปฏิเสธโครงสร้างข้อความ JSON");
                     }
                 })
                 .catch(error => {
