@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Direct API Maintenance Checksheet</title>
+    <title>Smart Maintenance Checksheet - API Edition</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- ไลบรารีแปลง HTML เป็น PDF ในเครื่อง -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
@@ -13,18 +12,15 @@
 </head>
 <body class="bg-slate-100 min-h-screen font-sans">
 
-    <!-- Header Banner -->
     <header class="bg-blue-800 text-white p-4 shadow-md">
         <div class="container mx-auto">
-            <h1 class="text-xl font-bold">🔧 ระบบใบงานซ่อมบำรุงรักษา (Direct API Upload)</h1>
-            <p class="text-xs text-blue-200">ยิงข้อมูลตรงเข้าคลัง Microsoft 365 ผ่าน Webhook (ไม่ใช้ Pop-up ล็อกอิน)</p>
+            <h1 class="text-xl font-bold">🔧 ระบบใบงานซ่อมบำรุงรักษาอัจฉริยะ (Direct API Upload)</h1>
+            <p class="text-xs text-blue-200">ประมวลผล PDF และส่งไฟล์ผ่าน API Webhook ตรงเข้าคลังโฟลเดอร์ Microsoft 365</p>
         </div>
     </header>
 
-    <!-- Main Content -->
     <main class="container mx-auto p-4 grid grid-cols-1 lg:grid-cols-2 gap-6">
         
-        <!-- ฝั่งซ้าย: ตัวออกแบบหัวข้อ -->
         <div class="bg-white p-5 rounded-lg shadow-md border-t-4 border-blue-600">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-md font-bold text-gray-700">🏗️ 1. ปรับแต่งหัวข้อ Check Sheet</h2>
@@ -32,38 +28,39 @@
                     ➕ เพิ่มหัวข้อหลัก
                 </button>
             </div>
-            <div id="builder-container" class="space-y-4 max-h-[68vh] overflow-y-auto pr-1 text-xs"></div>
+            <div id="builder-container" class="space-y-4 max-h-[68vh] overflow-y-auto pr-1 text-xs">
+                </div>
         </div>
 
-        <!-- ฝั่งขวา: ใบงานตรวจเช็คพรีวิว -->
         <div class="bg-white p-5 rounded-lg shadow-md border-t-4 border-orange-500 flex flex-col justify-between">
             <div>
-                <h2 class="text-md font-bold text-gray-700 mb-3">📄 2. หน้าฟอร์มตรวจเช็คหน้างาน</h2>
+                <h2 class="text-md font-bold text-gray-700 mb-3">📄 2. หน้าฟอร์มตรวจเช็คหน้างาน (Preview)</h2>
                 
                 <div id="pdf-area" class="bg-white p-5 rounded border border-gray-300 shadow-inner">
                     <div class="border-b-2 border-gray-800 pb-3 mb-4 text-center">
-                        <h3 class="text-lg font-bold text-gray-800">MAINTENANCE CHECKSHEET REPORT</h3>
+                        <h3 class="text-lg font-bold text-gray-800 tracking-wide">MAINTENANCE CHECKSHEET REPORT</h3>
+                        <p class="text-[10px] text-gray-500 mt-0.5">รายงานเอกสารผลการตรวจสอบบำรุงรักษาเครื่องจักรและระบบส่งวัสดุ</p>
+                        
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-1 mt-4 text-xs text-gray-600 text-left bg-slate-50 p-2 rounded border border-slate-200">
                             <div><strong>วันเวลาที่ตรวจเช็ค:</strong> <span id="current-date" class="text-blue-700 font-medium">-</span></div>
                             <div class="flex items-center gap-1">
                                 <strong>วิศวกรผู้ตรวจเช็ค:</strong> 
-                                <input type="text" id="eng-name" class="border-b border-gray-400 focus:border-blue-500 focus:outline-none w-full px-1 font-semibold text-gray-800 bg-transparent" placeholder="พิมพ์ชื่อของคุณ">
+                                <input type="text" id="eng-name" class="border-b border-gray-400 focus:border-blue-500 focus:outline-none w-full px-1 font-semibold text-gray-800 bg-transparent" placeholder="พิมพ์ชื่อ-นามสกุลของคุณ">
                             </div>
                         </div>
                     </div>
 
-                    <form id="preview-form" class="space-y-4 max-h-[42vh] overflow-y-auto pr-1"></form>
+                    <form id="preview-form" class="space-y-4 max-h-[42vh] overflow-y-auto pr-1">
+                        </form>
                 </div>
             </div>
 
-            <!-- ปุ่มบันทึกและจัดการ API -->
-            <div class="mt-4 pt-3 border-t border-gray-200 space-y-2">
-                <div class="bg-slate-50 p-2 rounded border text-[11px] text-gray-500">
-                    <strong>🔗 ลิงก์ท่อส่งข้อมูล (Power Automate HTTP POST URL):</strong>
-                    <input type="text" id="webhook-url" class="w-full p-2 border rounded mt-1 font-mono text-xs text-blue-700" value="PASTE_YOUR_POWER_AUTOMATE_URL_HERE" placeholder="วางลิงก์ HTTP POST URL ที่ได้จาก Power Automate">
-                </div>
-                <button onclick="generateAndUploadViaAPI()" class="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-3.5 px-4 rounded shadow-md transition flex justify-center items-center gap-2 text-sm">
-                    🚀 ส่งใบงานเข้า OneDrive / SharePoint ทันที (Direct API)
+            <div class="mt-4 pt-3 border-t border-gray-200 space-y-3">
+                <input type="hidden" id="webhook-url" 
+                       value="https://default5febc69f8e9c4708b70ed8c62be180.5b.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/10cacbfcc3fc4b7a82fbce08fb25d33f/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=qpm4UxBmt4bInZjUyZJpmL9ObkHK--GUGf0AUlqm7ks">
+                
+                <button onclick="generateAndUploadViaAPI()" class="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-3.5 px-4 rounded shadow-md transition flex justify-center items-center gap-2 text-sm tracking-wide">
+                    🚀 ส่งใบงานเข้า OneDrive / SharePoint ทันที (Direct API Webhook)
                 </button>
             </div>
         </div>
@@ -71,8 +68,12 @@
     </main>
 
     <script>
-        setInterval(() => { document.getElementById('current-date').innerText = new Date().toLocaleString('th-TH'); }, 1000);
+        // รันสคริปต์นาฬิกาอัปเดตเวลาบนหัวกระดาษรายงาน
+        setInterval(() => { 
+            document.getElementById('current-date').innerText = new Date().toLocaleString('th-TH'); 
+        }, 1000);
 
+        // คลังโครงสร้างคำถามตรวจเช็คเครื่องจักรเริ่มต้น
         let checksheetData = [
             {
                 id: 'm_1', title: 'ตรวจสอบสายพานลำเลียงหลัก (Main Conveyor)', type: 'checkbox',
@@ -83,32 +84,61 @@
             }
         ];
 
-        // ฟังก์ชันระบบฟอร์ม (คงเดิมเพื่อขับเคลื่อน UI)
-        function addMainTopic() { checksheetData.push({ id: 'main_' + Date.now(), title: 'หัวข้อหลักใหม่', type: 'text_short', subTopics: [] }); renderBuilder(); renderPreview(); }
-        function addSubTopic(mainId) { const m = checksheetData.find(m => m.id === mainId); if (m) { m.subTopics.push({ id: 'sub_' + Date.now(), title: 'หัวข้อย่อยใหม่', type: 'text_short' }); renderBuilder(); renderPreview(); } }
+        // --- ส่วนขับเคลื่อนโครงสร้างและการปรับแต่งแบบฟอร์ม (Form Engine) ---
+        function addMainTopic() { 
+            checksheetData.push({ id: 'main_' + Date.now(), title: 'หัวข้อหลักใหม่', type: 'text_short', subTopics: [] }); 
+            renderBuilder(); renderPreview(); 
+        }
+        function addSubTopic(mainId) { 
+            const m = checksheetData.find(m => m.id === mainId); 
+            if (m) { m.subTopics.push({ id: 'sub_' + Date.now(), title: 'หัวข้อย่อยใหม่', type: 'text_short' }); renderBuilder(); renderPreview(); } 
+        }
         function deleteMainTopic(mainId) { checksheetData = checksheetData.filter(m => m.id !== mainId); renderBuilder(); renderPreview(); }
         function deleteSubTopic(mainId, subId) { const m = checksheetData.find(m => m.id === mainId); if (m) { m.subTopics = m.subTopics.filter(s => s.id !== subId); renderBuilder(); renderPreview(); } }
         function updateValue(mId, sId, f, v) { const m = checksheetData.find(x => x.id === mId); if (m) { if (sId === null) m[f] = v; else { const s = m.subTopics.find(x => x.id === sId); if (s) s[f] = v; } } renderPreview(); }
 
+        // ฟังก์ชันวาดเครื่องมือจัดการฝั่งซ้าย (Builder)
         function renderBuilder() {
             const c = document.getElementById('builder-container'); c.innerHTML = '';
             checksheetData.forEach((main) => {
                 const div = document.createElement('div'); div.className = 'bg-gray-50 p-3 rounded-lg border border-gray-300 space-y-2 shadow-sm';
-                div.innerHTML = `<div class="flex gap-1 items-center"><input type="text" value="${main.title}" oninput="updateValue('${main.id}', null, 'title', this.value)" class="flex-1 p-1.5 border rounded text-xs"><select onchange="updateValue('${main.id}', null, 'type', this.value)" class="p-1.5 border rounded bg-white text-[11px]"><option value="text_short" ${main.type === 'text_short' ? 'selected' : ''}>Text สั้น</option><option value="text_long" ${main.type === 'text_long' ? 'selected' : ''}>Text ยาว</option><option value="checkbox" ${main.type === 'checkbox' ? 'selected' : ''}>Checkbox</option></select><button onclick="deleteMainTopic('${main.id}')" class="text-red-500 font-bold px-2 hover:text-red-700 text-sm">🗑️</button></div><div class="pl-4 border-l-2 border-dashed border-gray-400 space-y-1.5" id="sub-b-${main.id}"></div><button onclick="addSubTopic('${main.id}')" class="text-[10px] text-blue-600 font-semibold block pl-4 mt-1">➕ เพิ่มหัวข้อย่อย</button>`;
+                div.innerHTML = `
+                    <div class="flex gap-1 items-center">
+                        <input type="text" value="${main.title}" oninput="updateValue('${main.id}', null, 'title', this.value)" class="flex-1 p-1.5 border rounded text-xs focus:ring-1 focus:ring-blue-500 outline-none">
+                        <select onchange="updateValue('${main.id}', null, 'type', this.value)" class="p-1.5 border rounded bg-white text-[11px] focus:ring-1 focus:ring-blue-500 outline-none">
+                            <option value="text_short" ${main.type === 'text_short' ? 'selected' : ''}>Text สั้น</option>
+                            <option value="text_long" ${main.type === 'text_long' ? 'selected' : ''}>Text ยาว</option>
+                            <option value="checkbox" ${main.type === 'checkbox' ? 'selected' : ''}>Checkbox</option>
+                        </select>
+                        <button onclick="deleteMainTopic('${main.id}')" class="text-red-500 font-bold px-2 hover:text-red-700 text-sm">🗑️</button>
+                    </div>
+                    <div class="pl-4 border-l-2 border-dashed border-gray-300 space-y-1.5" id="sub-b-${main.id}"></div>
+                    <button onclick="addSubTopic('${main.id}')" class="text-[10px] text-blue-600 hover:text-blue-800 font-semibold block pl-4 mt-1">➕ เพิ่มหัวข้อย่อย (Sub title)</button>
+                `;
                 c.appendChild(div);
+                
                 const sc = document.getElementById(`sub-b-${main.id}`);
                 main.subTopics.forEach((sub) => {
-                    const sd = document.createElement('div'); sd.className = 'flex gap-1 items-center bg-white p-1.5 rounded border border-gray-200';
-                    sd.innerHTML = `<input type="text" value="${sub.title}" oninput="updateValue('${main.id}', '${sub.id}', 'title', this.value)" class="flex-1 p-1 border rounded text-[11px]"><select onchange="updateValue('${main.id}', '${sub.id}', 'type', this.value)" class="p-1 border rounded bg-white text-[10px]"><option value="text_short" ${sub.type === 'text_short' ? 'selected' : ''}>Text สั้น</option><option value="text_long" ${sub.type === 'text_long' ? 'selected' : ''}>Text ยาว</option><option value="checkbox" ${sub.type === 'checkbox' ? 'selected' : ''}>Checkbox</option></select><button onclick="deleteSubTopic('${main.id}', '${sub.id}')" class="text-red-400 text-xs px-1">🗑️</button>`;
+                    const sd = document.createElement('div'); sd.className = 'flex gap-1 items-center bg-white p-1.5 rounded border border-gray-200 shadow-sm';
+                    sd.innerHTML = `
+                        <input type="text" value="${sub.title}" oninput="updateValue('${main.id}', '${sub.id}', 'title', this.value)" class="flex-1 p-1 border rounded text-[11px] focus:ring-1 focus:ring-blue-500 outline-none">
+                        <select onchange="updateValue('${main.id}', '${sub.id}', 'type', this.value)" class="p-1 border rounded bg-white text-[10px] focus:ring-1 focus:ring-blue-500 outline-none">
+                            <option value="text_short" ${sub.type === 'text_short' ? 'selected' : ''}>Text สั้น</option>
+                            <option value="text_long" ${sub.type === 'text_long' ? 'selected' : ''}>Text ยาว</option>
+                            <option value="checkbox" ${sub.type === 'checkbox' ? 'selected' : ''}>Checkbox</option>
+                        </select>
+                        <button onclick="deleteSubTopic('${main.id}', '${sub.id}')" class="text-red-400 hover:text-red-600 text-xs px-1">🗑️</button>
+                    `;
                     sc.appendChild(sd);
                 });
             });
         }
 
+        // ฟังก์ชันวาดฟอร์มรับข้อมูลฝั่งขวา (Preview)
         function renderPreview() {
             const f = document.getElementById('preview-form'); f.innerHTML = '<div id="preview-container" class="space-y-3"></div>';
             const pc = document.getElementById('preview-container');
-            if (checksheetData.length === 0) { pc.innerHTML = '<div class="text-gray-400 italic text-center py-8">ไม่มีหัวข้อการตรวจเช็ค</div>'; return; }
+            if (checksheetData.length === 0) { pc.innerHTML = '<div class="text-gray-400 italic text-center py-8">ไม่มีหัวข้อการตรวจเช็ค กรุณาเพิ่มหัวข้อหลักทางด้านซ้าย</div>'; return; }
             checksheetData.forEach((main) => {
                 const div = document.createElement('div'); div.className = "p-3 bg-slate-50 rounded border border-gray-200 shadow-sm";
                 let mHtml = getInputHtml(main.id, main.title, main.type, 'main');
@@ -118,62 +148,71 @@
             });
         }
 
+        // ตัวคุมหน้าตาฟิลด์กรอกข้อมูล
         function getInputHtml(id, title, type, level) {
             const lbl = level === 'main' ? 'block font-semibold text-gray-800 text-xs' : 'block text-gray-600 text-[11px]';
-            if (type === 'text_short') return `<label class="${lbl}">${title}</label><input type="text" name="${id}" class="w-full p-1.5 border rounded bg-white text-xs mt-1 outline-none">`;
-            if (type === 'text_long') return `<label class="${lbl}">${title}</label><textarea name="${id}" rows="2" class="w-full p-1.5 border rounded bg-white text-xs mt-1 outline-none"></textarea>`;
-            if (type === 'checkbox') return `<div class="flex items-center gap-2 py-0.5"><input type="checkbox" id="${id}" name="${id}" class="w-4 h-4 rounded text-orange-500 border-gray-300"><label for="${id}" class="${lbl} cursor-pointer">${title}</label></div>`;
+            if (type === 'text_short') return `<label class="${lbl}">${title}</label><input type="text" name="${id}" class="w-full p-1.5 border rounded bg-white text-xs mt-1 focus:ring-1 focus:ring-orange-400 outline-none">`;
+            if (type === 'text_long') return `<label class="${lbl}">${title}</label><textarea name="${id}" rows="2" class="w-full p-1.5 border rounded bg-white text-xs mt-1 focus:ring-1 focus:ring-orange-400 outline-none"></textarea>`;
+            if (type === 'checkbox') return `<div class="flex items-center gap-2 py-0.5"><input type="checkbox" id="${id}" name="${id}" class="w-4 h-4 rounded text-orange-500 border-gray-300 focus:ring-orange-400"><label for="${id}" class="${lbl} cursor-pointer">${title} <span class="text-green-600 font-normal text-[10px]">(ปกติ / ผ่าน)</span></label></div>`;
             return '';
         }
 
         // ====================================================================
-        // 🚀 ฟังก์ชันเด็ด: แปลงเป็น PDF ในความจำเครื่อง แล้วยิง API ลื่นๆ ทันที
+        // 🚀 ฟังก์ชันหลัก: ประมวลผลเป็น PDF ยิงส่งตรงข้ามระบบด้วย API (No Pop-up)
         // ====================================================================
         function generateAndUploadViaAPI() {
             const engineer = document.getElementById('eng-name').value.trim();
             const webhookUrl = document.getElementById('webhook-url').value.trim();
 
-            if (!engineer) { alert("⚠️ กรุณากรอกชื่อวิศวกรผู้ตรวจเช็คก่อนครับ"); return; }
-            if (!webhookUrl || webhookUrl === 'https://default5febc69f8e9c4708b70ed8c62be180.5b.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/10cacbfcc3fc4b7a82fbce08fb25d33f/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=qpm4UxBmt4bInZjUyZJpmL9ObkHK--GUGf0AUlqm7ks') { alert("⚠️ กรุณาใส่ลิงก์ Power Automate Webhook ในกล่องตั้งค่าด้านล่างก่อนครับ"); return; }
+            if (!engineer) { 
+                alert("⚠️ ปฏิเสธการบันทึก: กรุณากรอกชื่อวิศวกรผู้ตรวจเช็คตรงหัวใบงานฝั่งขวาก่อนส่งออกไฟล์ครับ"); 
+                return; 
+            }
 
             const element = document.getElementById('pdf-area');
-            const dateStr = new Date().toISOString().slice(0,10);
+            const dateStr = new Date().toISOString().slice(0,10); // คืนค่าฟอร์แมตวันที่สากล YYYY-MM-DD
             const fileName = `Report_${dateStr}_${engineer.replace(/\s+/g, '_')}.pdf`;
 
-            const opt = {
-                margin: 10, filename: fileName, image: { type: 'jpeg', quality: 0.95 },
-                html2canvas: { scale: 1.5 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            // กำหนดความคมชัดและขนาดของหน้ากระดาษรายงาน (A4 แนวตั้ง คมชัดระดับ 1.5 เท่า)
+            const pdfConfig = {
+                margin:       10,
+                filename:     fileName,
+                image:        { type: 'jpeg', quality: 0.95 },
+                html2canvas:  { scale: 1.5, useCORS: true },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
             };
 
-            alert("🔄 กำลังส่งออกใบงานผ่าน API ตรงเข้า Microsoft 365...");
+            alert("🔄 ระบบกำลังประมวลผลแปลงใบงานซ่อมบำรุงรักษาเป็นเอกสาร PDF และส่งผ่าน API ตรงเข้าสู่เซิร์ฟเวอร์ Microsoft 365 หลังบ้าน...");
 
-            // 1. เจน PDF ออกมาเป็นไบนารีในเครื่อง (Blob)
-            html2pdf().set(opt).from(element).toPdf().output('blob').then(function(pdfBlob) {
+            // 1. สั่งประมวลผลหน้าฟอร์มให้กลายเป็นก้อนข้อมูลไฟล์ PDF ไบนารี (Blob)
+            html2pdf().set(pdfConfig).from(element).toPdf().output('blob').then(function(pdfBlob) {
                 
-                // 2. แพ็กไฟล์ PDF ลง FormData เพื่อส่งผ่าน HTTP API
-                let formData = new FormData();
-                formData.append("file", pdfBlob, fileName);
+                // 2. แพ็กไฟล์ PDF เข้าสู่กล่องนำส่งข้อมูลรูปแบบ HTTP Multipart FormData
+                let dataPackage = new FormData();
+                dataPackage.append("file", pdfBlob, fileName);
 
-                // 3. ใช้คำสั่ง Fetch ยิง API ไปหาท่อส่งข้อมูลตรงๆ (ไม่มีการเปิดป๊อปอัป)
+                // 3. ใช้คำสั่ง Fetch ยิงข้อมูลตรงเข้าท่อ Webhook ปลายทางโดยตรงโดยไม่ต้องมีป๊อปอัปเด้งถาม
                 fetch(webhookUrl, {
                     method: "POST",
-                    body: formData
+                    body: dataPackage
                 })
                 .then(response => {
                     if (response.ok) {
-                        alert(`🎉 API ส่งข้อมูลสำเร็จ!\nเอกสารใบงาน "${fileName}" ถูกส่งไปบันทึกบนคลาวด์ Microsoft 365 เรียบร้อยครับ`);
+                        alert(`🎉 นำส่งข้อมูลสำเร็จ!\nใบงานตรวจเช็ค "${fileName}" ถูกส่งผ่านระบบ API และจัดเก็บเข้าสู่คลังเอกสารเรียบร้อยแล้วครับ`);
                     } else {
-                        alert("❌ เกิดข้อผิดพลาด: เซิร์ฟเวอร์ปลายทางปฏิเสธการรับไฟล์ (เช็คลิงก์ Webhook หรือสิทธิ์เข้าถึง)");
+                        alert("❌ เกิดข้อผิดพลาดทางเทคนิค: ตัวรับค่าของ Power Automate ปฏิเสธการรับก้อนข้อมูล (โปรดเช็คความถูกต้องของโครงสร้างสิทธิ์รับไฟล์)");
                     }
                 })
                 .catch(error => {
-                    console.error("API Error: ", error);
-                    alert("❌ ไม่สามารถติดต่อเซิร์ฟเวอร์ได้ (โปรดตรวจสอบสัญญาณอินเทอร์เน็ตหน้างาน)");
+                    console.error("Transmission Error: ", error);
+                    alert("❌ ไม่สามารถติดต่อเซิร์ฟเวอร์ปลายทางได้ (โปรดตรวจสอบสัญญาณอินเทอร์เน็ตหน้างาน)");
                 });
             });
         }
 
-        renderBuilder(); renderPreview();
+        // เริ่มต้นรันหน้าจอเครื่องมือระบบตั้งแต่เปิดเว็บครั้งแรก
+        renderBuilder(); 
+        renderPreview();
     </script>
 </body>
 </html>
