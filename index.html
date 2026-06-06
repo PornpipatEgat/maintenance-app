@@ -3,19 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Maintenance Checksheet (Direct Cloud Save)</title>
+    <title>OneDrive Cloud Checksheet System</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script type="text/javascript" src="https://js.live.net/v7.2/OneDrive.js"></script>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
     </style>
 </head>
 <body class="bg-slate-100 min-h-screen font-sans">
 
-    <header class="bg-blue-700 text-white p-4 shadow-md">
+    <header class="bg-blue-800 text-white p-4 shadow-md">
         <div class="container mx-auto">
-            <h1 class="text-xl font-bold">🔧 ระบบใบงานซ่อมบำรุงรักษาและจัดการ Checksheet ออนไลน์</h1>
-            <p class="text-xs text-blue-200">สร้างใบงาน PDF ในเครื่อง และเลือก Directory เซฟลง OneDrive / Shared Folder ได้อย่างอิสระ</p>
+            <h1 class="text-xl font-bold">🔧 ระบบใบงานซ่อมบำรุงรักษาอัจฉริยะ (OneDrive Saver Edition)</h1>
+            <p class="text-xs text-blue-200">ออกแบบฟอร์ม กรอกข้อมูลหน้างาน และบังคับล็อกอินเลือกโฟลเดอร์เซฟลงคลาวด์โดยตรง</p>
         </div>
     </header>
 
@@ -23,7 +24,7 @@
         
         <div class="bg-white p-5 rounded-lg shadow-md border-t-4 border-blue-600">
             <div class="flex justify-between items-center mb-4">
-                <h2 class="text-md font-bold text-gray-700 flex items-center gap-1">🏗️ 1. ปรับแต่งหัวข้อ Check Sheet</h2>
+                <h2 class="text-md font-bold text-gray-700">🏗️ 1. ปรับแต่งหัวข้อ Check Sheet</h2>
                 <button onclick="addMainTopic()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded text-xs font-semibold transition shadow-sm">
                     ➕ เพิ่มหัวข้อหลัก
                 </button>
@@ -39,7 +40,7 @@
                 <div id="pdf-area" class="bg-white p-5 rounded border border-gray-300 shadow-inner">
                     <div class="border-b-2 border-gray-800 pb-3 mb-4 text-center">
                         <h3 class="text-lg font-bold text-gray-800 tracking-wide">MAINTENANCE CHECKSHEET REPORT</h3>
-                        <p class="text-[10px] text-gray-500 mt-0.5">รายงานผลการตรวจสอบและบำรุงรักษาอุปกรณ์ระบบขนส่งวัสดุ</p>
+                        <p class="text-[10px] text-gray-500 mt-0.5">รายงานเอกสารผลการตรวจสอบบำรุงรักษาเครื่องจักรและระบบส่งวัสดุ</p>
                         
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-1 mt-4 text-xs text-gray-600 text-left bg-slate-50 p-2 rounded border border-slate-200">
                             <div><strong>วันเวลาที่ตรวจเช็ค:</strong> <span id="current-date" class="text-blue-700 font-medium">-</span></div>
@@ -57,7 +58,7 @@
 
             <div class="mt-4 pt-3 border-t border-gray-200">
                 <button onclick="generateAndSavePDF()" class="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-3.5 px-4 rounded shadow-md transition flex justify-center items-center gap-2 text-sm tracking-wide">
-                    💾 ประมวลผลใบงาน PDF & เลือกโฟลเดอร์ OneDrive เซฟทันที
+                    ☁️ ล็อกอิน Microsoft & เลือกโฟลเดอร์เซฟไฟล์ลง OneDrive ทันที
                 </button>
             </div>
         </div>
@@ -65,12 +66,12 @@
     </main>
 
     <script>
-        // ฟังก์ชันอัปเดตวันเวลาแบบสดๆ บนหน้าจอใบงาน
+        // อัปเดตเวลาแบบเรียลไทม์บนหัวใบงาน
         setInterval(() => { 
             document.getElementById('current-date').innerText = new Date().toLocaleString('th-TH'); 
         }, 1000);
 
-        // โครงสร้างข้อมูลตั้งต้น (จำลองระบบสายพานลำเลียงยอดนิยมมาให้เลยครับ)
+        // โครงสร้างข้อมูลจำลองตั้งต้นของระบบ
         let checksheetData = [
             {
                 id: 'm_1', title: 'ตรวจสอบสายพานลำเลียงหลัก (Main Conveyor)', type: 'checkbox',
@@ -81,7 +82,7 @@
             }
         ];
 
-        // --- โซนฟังก์ชันจัดการโครงสร้างแบบฟอร์ม (Form Builder) ---
+        // --- ระบบสลับและจัดการโครงสร้างแบบฟอร์ม (Form Builder & Interactive Engine) ---
         function addMainTopic() { 
             checksheetData.push({ id: 'main_' + Date.now(), title: 'หัวข้อหลักใหม่', type: 'text_short', subTopics: [] }); 
             renderBuilder(); renderPreview(); 
@@ -94,7 +95,7 @@
         function deleteSubTopic(mainId, subId) { const m = checksheetData.find(m => m.id === mainId); if (m) { m.subTopics = m.subTopics.filter(s => s.id !== subId); renderBuilder(); renderPreview(); } }
         function updateValue(mId, sId, f, v) { const m = checksheetData.find(x => x.id === mId); if (m) { if (sId === null) m[f] = v; else { const s = m.subTopics.find(x => x.id === sId); if (s) s[f] = v; } } renderPreview(); }
 
-        // ฟังก์ชันวาดหน้าต่างควบคุมฝั่งซ้าย (Builder)
+        // วาดเครื่องมือตั้งค่าฝั่งซ้าย
         function renderBuilder() {
             const c = document.getElementById('builder-container'); c.innerHTML = '';
             checksheetData.forEach((main) => {
@@ -131,7 +132,7 @@
             });
         }
 
-        // ฟังก์ชันวาดหน้าตาแบบฟอร์มฝั่งขวา (Preview ใบงานจริง)
+        // วาดหน้าจอตัวกรอกฝั่งขวา
         function renderPreview() {
             const f = document.getElementById('preview-form'); f.innerHTML = '<div id="preview-container" class="space-y-3"></div>';
             const pc = document.getElementById('preview-container');
@@ -145,30 +146,29 @@
             });
         }
 
-        // ฟังก์ชันตัวสลับเจเนอเรตหน้าตา Input ฟิลด์
         function getInputHtml(id, title, type, level) {
             const lbl = level === 'main' ? 'block font-semibold text-gray-800 text-xs' : 'block text-gray-600 text-[11px]';
             if (type === 'text_short') return `<label class="${lbl}">${title}</label><input type="text" name="${id}" class="w-full p-1.5 border rounded bg-white text-xs mt-1 focus:ring-1 focus:ring-orange-400 outline-none">`;
-            if (type === 'text_long') return `<label class="${lbl}">${title}</label><textarea name="${id}" rows="2" class="w-full p-1.5 border rounded bg-white text-xs mt-1 focus:ring-1 focus:ring-orange-400 outline-none" placeholder="ระบุรายละเอียด..."></textarea>`;
+            if (type === 'text_long') return `<label class="${lbl}">${title}</label><textarea name="${id}" rows="2" class="w-full p-1.5 border rounded bg-white text-xs mt-1 focus:ring-1 focus:ring-orange-400 outline-none"></textarea>`;
             if (type === 'checkbox') return `<div class="flex items-center gap-2 py-0.5"><input type="checkbox" id="${id}" name="${id}" class="w-4 h-4 rounded text-orange-500 border-gray-300 focus:ring-orange-400"><label for="${id}" class="${lbl} cursor-pointer">${title} <span class="text-green-600 font-normal text-[10px]">(ปกติ / ผ่าน)</span></label></div>`;
             return '';
         }
 
         // ====================================================================
-        // 🔥 ฟังก์ชันหลักวิธีที่ 1: เจนไฟล์ PDF และปลุกระบบค้นหา Directory สู่คลาวด์ไดรฟ์
+        // 🚀 ฟังก์ชันหลัก: เรนเดอร์หน้าจอพรีวิวเป็น PDF และปลุกหน้าต่าง OneDrive Cloud ขึ้นมาเซฟ
         // ====================================================================
         function generateAndSavePDF() {
             const engineer = document.getElementById('eng-name').value.trim();
             if (!engineer) { 
-                alert("⚠️ ปฏิเสธการบันทึก: กรุณากรอกชื่อวิศวกรผู้ตรวจเช็คก่อนส่งออกไฟล์ทุกครั้งครับ"); 
+                alert("⚠️ ปฏิเสธการบันทึก: กรุณากรอกชื่อวิศวกรผู้ตรวจเช็คตรงหัวใบงานฝั่งขวาก่อนส่งออกไฟล์ครับ"); 
                 return; 
             }
 
             const element = document.getElementById('pdf-area');
-            const dateStr = new Date().toISOString().slice(0,10); // จะได้ฟอร์แมต YYYY-MM-DD
+            const dateStr = new Date().toISOString().slice(0,10); // คืนค่าฟอร์แมตวันที่สากล YYYY-MM-DD
             const fileName = `Maintenance_Report_${dateStr}_${engineer}.pdf`;
 
-            // กำหนดสเปกกระดาษใบงานซ่อมบำรุง (ขนาด A4 แนวตั้ง พอดีกรอบ)
+            // กำหนดค่ามาตรฐานหน้ากระดาษ PDF (A4 แนวตั้ง คมชัดระดับ 2x)
             const pdfConfig = {
                 margin:       10,
                 filename:     fileName,
@@ -177,15 +177,38 @@
                 jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
             };
 
-            alert("🔄 แอปพลิเคชันกำลังเรนเดอร์เอกสารโครงสร้างใบงานซ่อมบำรุงรักษา...\nเมื่อระบบประมวลผลเสร็จ หน้าต่าง File Explorer จะเด้งขึ้นมาเพื่อให้ท่านเลือกบันทึกตรงเข้าคลังโฟลเดอร์ OneDrive ทันทีครับ");
+            alert("🔄 ระบบกำลังทำการประมวลผลเรนเดอร์เอกสารใบงานซ่อมบำรุงรักษา...\nจากนั้นหน้าต่างของ Microsoft OneDrive จะเปิดขึ้นมาเพื่อให้ท่านล็อกอินและเลือกโฟลเดอร์สำหรับอัปโหลดจัดเก็บครับ");
 
-            // ดำเนินการสร้าง PDF และสั่ง .save() เพื่อกระตุ้นตัวรับค่า Directory ของตัวเครื่อง
-            html2pdf().set(pdfConfig).from(element).save().then(() => {
-                console.log("PDF Generation complete, trigger directory system successfully.");
+            // 1. สั่งรันไลบรารีแปลงหน้าฟอร์มฝั่งขวาเป็นชุดข้อความไฟล์ PDF (Data URL Base64) ในสเปซเครื่องพนักงาน
+            html2pdf().set(pdfConfig).from(element).toPdf().output('datauristring').then(function(pdfBase64Text) {
+                
+                // 2. เรียกโครงสร้างกล่องรับของแท้จากทาง Microsoft OneDrive SDK v7.2
+                // ใช้รหัสแอปสาธารณะส่วนกลาง (Public Client ID) เพื่อปลดล็อกความปลอดภัยให้รองรับพนักงานทุกค่ายอีเมลทันที
+                const microsoftOneDriveOptions = {
+                    clientId: "00000000401b3865", 
+                    action: "save",
+                    sourceTypes: ["OneDriveBusiness", "OneDriveConsumer"], // ยอมรับทั้งบัญชีบริษัท, บัญชีโรงเรียน หรือบัญชีส่วนตัว Hotmail/Outlook
+                    openInNewWindow: true,
+                    file: pdfBase64Text, // ยัดไฟล์ PDF ไบนารีข้อความเข้าไปในกระบวนการส่งออก
+                    fileName: fileName,
+                    success: function() { 
+                        alert(`🎉 อัปโหลดสำเร็จ!\nเอกสารใบงานซ่อมบำรุง "${fileName}" ได้รับการจัดส่งเข้าสู่คลัง Directory โฟลเดอร์ OneDrive ที่ท่านเลือกเรียบร้อยแล้วครับ`); 
+                    },
+                    cancel: function() { 
+                        console.log("User closed the picker without saving."); 
+                    },
+                    error: function(errorMessage) { 
+                        console.error("OneDrive SDK Error: ", errorMessage); 
+                        alert("❌ เกิดข้อผิดพลาดในการรับส่งข้อมูลกับทางระบบ Cloud OneDrive"); 
+                    }
+                };
+
+                // สั่งจุดฉนวนเปิดหน้าต่าง Pop-up สิทธิ์การล็อกอินและเลือกโฟลเดอร์ OneDrive บนหน้าเว็บทันที
+                OneDrive.save(microsoftOneDriveOptions);
             });
         }
 
-        // สั่งให้ระบบวาดข้อมูลฟอร์มสายพานจำลองขึ้นมาแสดงตั้งแต่เปิดเว็บครั้งแรก
+        // เริ่มต้นรันหน้าจอเครื่องมือระบบตั้งแต่โหลดหน้าเว็บสำเร็จครั้งแรก
         renderBuilder(); 
         renderPreview();
     </script>
