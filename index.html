@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Maintenance Platform - Enterprise V4</title>
+    <title>Smart Maintenance Platform - Enterprise V6.1</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
@@ -17,8 +17,8 @@
     <header id="main-nav" class="bg-blue-800 text-white p-4 shadow-md hidden">
         <div class="container mx-auto flex justify-between items-center">
             <div>
-                <h1 class="text-lg font-bold">🔧 Smart Maintenance Platform V4</h1>
-                <p class="text-xs text-blue-200">ระบบจัดการตรวจสอบและบันทึกใบงานสายพานลำเลียง (Full Data Auto-Expand)</p>
+                <h1 class="text-lg font-bold">🔧 Smart Maintenance Platform V6.1</h1>
+                <p class="text-xs text-blue-200">ระบบจัดการตรวจสอบและบันทึกใบงานสายพานลำเลียง (Isolated Template Edition)</p>
             </div>
             <div class="flex items-center gap-4 text-xs">
                 <span id="user-display-status" class="bg-blue-900 px-3 py-1.5 rounded font-medium"></span>
@@ -48,7 +48,7 @@
                 <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded shadow transition">🔓 ลงชื่อเข้าใช้งาน</button>
             </form>
             <div class="mt-4 p-2 bg-slate-50 rounded border text-[11px] text-gray-500 text-center">
-                <strong>Account เริ่มต้นระบบ:</strong><br>
+                <strong>Account เริ่มต้นระบบ (คลังสำรอง):</strong><br>
                 Admin: admin / admin1234 | ช่าง: tech01 / 1234
             </div>
         </div>
@@ -56,7 +56,10 @@
 
     <section id="admin-section" class="page-section p-6 container mx-auto">
         <div class="bg-white p-6 rounded-lg shadow-md border-t-4 border-purple-600">
-            <h2 class="text-xl font-bold text-gray-800 mb-4">👥 ระบบจัดการฐานข้อมูลผู้ใช้งาน (Admin Panel)</h2>
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold text-gray-800">👥 ระบบจัดการฐานข้อมูลผู้ใช้งาน (Admin Panel)</h2>
+                <button onclick="syncUsersFromCloud()" class="bg-blue-600 text-white font-bold px-3 py-1.5 rounded text-xs">🔄 ดึงข้อมูลผู้ใช้จาก Cloud ล่าสุด</button>
+            </div>
             
             <form id="user-form" onsubmit="saveUser(event)" class="bg-slate-50 p-4 rounded-lg border mb-6 grid grid-cols-1 md:grid-cols-4 gap-4 text-xs items-end">
                 <input type="hidden" id="user-edit-id">
@@ -76,7 +79,7 @@
                     </select>
                 </div>
                 <div class="flex gap-2">
-                    <button type="submit" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 rounded shadow">💾 บันทึกผู้ใช้</button>
+                    <button type="submit" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 rounded shadow">💾 บันทึกผู้ใช้ขึ้น Cloud</button>
                     <button type="button" onclick="clearUserForm()" class="bg-gray-400 hover:bg-gray-500 text-white px-3 py-2 rounded">เคลียร์</button>
                 </div>
             </form>
@@ -152,7 +155,7 @@
                 <div class="flex justify-between items-center mb-4">
                     <div>
                         <h2 class="text-md font-bold text-gray-700">🏗️ 1. ปรับแต่งเทมเพลต</h2>
-                        <p class="text-[10px] text-gray-400">ระบบจะจำการบันทึกแก้ไขครั้งล่าสุดแยกตามกลุ่มงาน</p>
+                        <p class="text-[10px] text-gray-400">ระบบจะจำรหัสเทมเพลตแยกขาดอิสระตามคู่สายพานและประเภทงาน</p>
                     </div>
                     <button onclick="addMainTopic()" class="bg-blue-600 hover:bg-blue-700 text-white px-2.5 py-1.5 rounded text-[11px] font-semibold transition shadow-sm">
                         ➕ เพิ่มหัวข้อหลัก
@@ -162,8 +165,8 @@
                 <div id="builder-container" class="space-y-4 max-h-[60vh] overflow-y-auto pr-1 text-xs"></div>
 
                 <div class="mt-4 pt-3 border-t">
-                    <button onclick="saveTemplateToStorage()" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded text-xs transition shadow">
-                        💾 บันทึกและอัปเดตแบบฟอร์มเทมเพลตล่าสุด
+                    <button onclick="saveTemplateToCloud()" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded text-xs transition shadow">
+                        ☁️ บันทึกแบบฟอร์มเฉพาะกิจชุดนี้ขึ้น Cloud ล่าสุด
                     </button>
                 </div>
             </div>
@@ -195,9 +198,14 @@
                 <div class="mt-4 pt-3 border-t border-gray-200 space-y-3">
                     <input type="hidden" id="webhook-url" value="https://default5febc69f8e9c4708b70ed8c62be180.5b.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/10cacbfcc3fc4b7a82fbce08fb25d33f/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=qpm4UxBmt4bInZjUyZJpmL9ObkHK--GUGf0AUlqm7ks">
                     
-                    <button onclick="generateAndUploadViaAPI()" class="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-3.5 px-4 rounded shadow-md transition flex justify-center items-center gap-2 text-sm tracking-wide">
-                        🚀 ส่งใบงานเข้า OneDrive / SharePoint ทันที (Direct API Webhook)
-                    </button>
+                    <div class="grid grid-cols-1 sm:grid-cols-4 gap-2">
+                        <button onclick="executePdfRenderProcess(true)" class="sm:col-span-1 bg-slate-600 hover:bg-slate-700 text-white font-bold py-3.5 px-2 rounded shadow-md transition text-xs">
+                            📥 ตรวจสอบและดาวน์โหลดไฟล์ร่างลงเครื่องคอม
+                        </button>
+                        <button onclick="executePdfRenderProcess(false)" class="sm:col-span-3 bg-orange-500 hover:bg-orange-600 text-white font-bold py-3.5 px-4 rounded shadow-md transition flex justify-center items-center gap-2 text-sm tracking-wide">
+                            🚀 ส่งใบงานเข้า OneDrive / SharePoint ทันที (Direct API Webhook)
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -228,7 +236,7 @@
         };
 
         window.onload = function() {
-            initUserDatabase();
+            syncUsersFromCloud();
             buildGroupNavigationUI();
             setInterval(() => { 
                 const cd = document.getElementById('current-date');
@@ -236,66 +244,59 @@
             }, 1000);
         };
 
-        // --- 1. User Database ---
-        function initUserDatabase() {
-            const storedUsers = localStorage.getItem('sm_users');
-            if (storedUsers) {
-                users = JSON.parse(storedUsers);
-            } else {
+        // --- 1. Cloud Enabled User Database ---
+        function syncUsersFromCloud() {
+            const webhookUrl = document.getElementById('webhook-url').value.trim();
+            fetch(webhookUrl, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ action: "load_users" })
+            })
+            .then(res => res.json())
+            .then(cloudData => {
+                if (cloudData && Array.isArray(cloudData)) { users = cloudData; } else { useDefaultFallbackUsers(); }
+                renderUserTable();
+            })
+            .catch(err => {
+                useDefaultFallbackUsers(); renderUserTable();
+            });
+        }
+
+        function useDefaultFallbackUsers() {
+            const stored = localStorage.getItem('sm_users');
+            if (stored) { users = JSON.parse(stored); } else {
                 users = [
                     { id: '1', username: 'admin', password: 'admin1234', role: 'ADMIN' },
                     { id: '2', username: 'tech01', password: '1234', role: 'USER' }
                 ];
                 localStorage.setItem('sm_users', JSON.stringify(users));
             }
-            renderUserTable();
         }
 
         function handleLogin(e) {
             e.preventDefault();
             const u = document.getElementById('login-username').value.trim();
             const p = document.getElementById('login-password').value.trim();
-            
             const found = users.find(x => x.username === u && x.password === p);
             if (found) {
                 currentUser = found;
                 document.getElementById('user-display-status').innerText = `👤 ผู้ใช้งาน: ${currentUser.username} (${currentUser.role})`;
                 document.getElementById('main-nav').classList.remove('hidden');
-                
-                if (currentUser.role === 'ADMIN') {
-                    document.getElementById('admin-mgmt-btn').classList.remove('hidden');
-                } else {
-                    document.getElementById('admin-mgmt-btn').classList.add('hidden');
-                }
-                
-                document.getElementById('login-form').reset();
-                goToGroupSelection();
-            } else {
-                alert('❌ ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง กรุณาลองใหม่');
-            }
+                if (currentUser.role === 'ADMIN') { document.getElementById('admin-mgmt-btn').classList.remove('hidden'); } else { document.getElementById('admin-mgmt-btn').classList.add('hidden'); }
+                document.getElementById('login-form').reset(); goToGroupSelection();
+            } else { alert('❌ ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง กรุณาลองใหม่'); }
         }
 
         function handleLogout() {
             currentUser = null; selectedLine = ""; selectedJob = "";
-            document.getElementById('main-nav').classList.add('hidden');
-            showSection('login-section');
+            document.getElementById('main-nav').classList.add('hidden'); showSection('login-section');
         }
 
         function renderUserTable() {
-            const tbody = document.getElementById('user-table-body');
-            tbody.innerHTML = '';
+            const tbody = document.getElementById('user-table-body'); if (!tbody) return; tbody.innerHTML = '';
             users.forEach(u => {
-                const tr = document.createElement('tr');
-                tr.className = "hover:bg-slate-50";
-                tr.innerHTML = `
-                    <td class="p-3 border">${u.id}</td>
-                    <td class="p-3 border font-semibold">${u.username}</td>
-                    <td class="p-3 border"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${u.role === 'ADMIN' ? 'bg-purple-100 text-purple-800':'bg-green-100 text-green-800'}">${u.role}</span></td>
-                    <td class="p-3 border flex gap-1">
-                        <button onclick="editUser('${u.id}')" class="bg-amber-500 hover:bg-amber-600 text-white px-2 py-1 rounded">✏️ แก้ไข</button>
-                        <button onclick="deleteUser('${u.id}')" class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded">🗑️ ลบ</button>
-                    </td>
-                `;
+                const tr = document.createElement('tr'); tr.className = "hover:bg-slate-50";
+                tr.innerHTML = `<td class="p-3 border">${u.id}</td><td class="p-3 border font-semibold">${u.username}</td><td class="p-3 border"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${u.role === 'ADMIN' ? 'bg-purple-100 text-purple-800':'bg-green-100 text-green-800'}">${u.role}</span></td><td class="p-3 border flex gap-1"><button onclick="editUser('${u.id}')" class="bg-amber-500 hover:bg-amber-600 text-white px-2 py-1 rounded">✏️ แก้ไข</button><button onclick="deleteUser('${u.id}')" class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded">🗑️ ลบ</button></td>`;
                 tbody.appendChild(tr);
             });
         }
@@ -306,136 +307,127 @@
             const u = document.getElementById('user-username').value.trim();
             const p = document.getElementById('user-password').value.trim();
             const r = document.getElementById('user-role').value;
+            const webhookUrl = document.getElementById('webhook-url').value.trim();
 
-            if (id) {
-                users = users.map(x => x.id === id ? { ...x, username: u, password: p, role: r } : x);
-                alert("แก้ไขข้อมูลผู้ใช้เรียบร้อยครับ");
-            } else {
-                if (users.some(x => x.username === u)) { alert("Username นี้ถูกใช้งานไปแล้วครับ"); return; }
-                users.push({ id: 'user_' + Date.now(), username: u, password: p, role: r });
-                alert("เพิ่มผู้ใช้งานใหม่เรียบร้อยครับ");
-            }
+            if (id) { users = users.map(x => x.id === id ? { ...x, username: u, password: p, role: r } : x); } 
+            else { if (users.some(x => x.username === u)) { alert("Username นี้ถูกใช้งานไปแล้วครับ"); return; } users.push({ id: 'user_' + Date.now(), username: u, password: p, role: r }); }
+
             localStorage.setItem('sm_users', JSON.stringify(users));
-            clearUserForm(); renderUserTable();
+            fetch(webhookUrl, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "save_users", data: users }) });
+            alert("💾 บันทึกและซิงค์ข้อมูลผู้ใช้ขึ้นระบบคลังกลางเรียบร้อยครับ"); clearUserForm(); renderUserTable();
         }
 
         function editUser(id) {
             const target = users.find(x => x.id === id);
             if (target) {
-                document.getElementById('user-edit-id').value = target.id;
-                document.getElementById('user-username').value = target.username;
-                document.getElementById('user-password').value = target.password;
-                document.getElementById('user-role').value = target.role;
+                document.getElementById('user-edit-id').value = target.id; document.getElementById('user-username').value = target.username;
+                document.getElementById('user-password').value = target.password; document.getElementById('user-role').value = target.role;
             }
         }
 
         function deleteUser(id) {
             if (confirm("คุณแน่ใจใช่ไหมที่จะลบผู้ใช้งานรายนี้?")) {
-                users = users.filter(x => x.id !== id);
-                localStorage.setItem('sm_users', JSON.stringify(users));
+                users = users.filter(x => x.id !== id); localStorage.setItem('sm_users', JSON.stringify(users));
+                const webhookUrl = document.getElementById('webhook-url').value.trim();
+                fetch(webhookUrl, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "save_users", data: users }) });
                 renderUserTable();
             }
         }
 
-        function clearUserForm() {
-            document.getElementById('user-form').reset();
-            document.getElementById('user-edit-id').value = '';
-        }
+        function clearUserForm() { document.getElementById('user-form').reset(); document.getElementById('user-edit-id').value = ''; }
 
         // --- 2. Navigation Control ---
-        function showSection(id) {
-            document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-        }
-
+        function showSection(id) { document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
         function goToGroupSelection() { showSection('group-section'); }
 
         function buildGroupNavigationUI() {
-            const container = document.getElementById('group-grid-container');
-            container.innerHTML = '';
+            const container = document.getElementById('group-grid-container'); container.innerHTML = '';
             for (const [groupName, lines] of Object.entries(lineGroups)) {
-                const box = document.createElement('div');
-                box.className = "bg-slate-50 p-4 rounded-lg border border-slate-200 shadow-sm";
+                const box = document.createElement('div'); box.className = "bg-slate-50 p-4 rounded-lg border border-slate-200 shadow-sm";
                 let lineButtonsHtml = "";
-                lines.forEach(line => {
-                    lineButtonsHtml += `
-                        <button onclick="selectLine('${line}')" class="bg-white hover:bg-blue-600 hover:text-white border border-slate-300 font-bold text-center text-xs p-2 rounded transition shadow-xs">${line}</button>
-                    `;
-                });
-                box.innerHTML = `
-                    <h3 class="font-bold text-blue-800 border-b pb-1 mb-2.5 text-xs flex justify-between items-center">
-                        📁 ${groupName} <span class="text-[10px] bg-blue-100 px-1.5 py-0.5 rounded-full">${lines.length} Line</span>
-                    </h3>
-                    <div class="grid grid-cols-3 gap-1.5">${lineButtonsHtml}</div>
-                `;
+                lines.forEach(line => { lineButtonsHtml += `<button onclick="selectLine('${line}')" class="bg-white hover:bg-blue-600 hover:text-white border border-slate-300 font-bold text-center text-xs p-2 rounded transition shadow-xs">${line}</button>`; });
+                box.innerHTML = `<h3 class="font-bold text-blue-800 border-b pb-1 mb-2.5 text-xs flex justify-between items-center">📁 ${groupName} <span class="text-[10px] bg-blue-100 px-1.5 py-0.5 rounded-full">${lines.length} Line</span></h3><div class="grid grid-cols-3 gap-1.5">${lineButtonsHtml}</div>`;
                 container.appendChild(box);
             }
         }
 
-        function selectLine(lineName) {
-            selectedLine = lineName;
-            document.getElementById('selected-line-display').innerText = selectedLine;
-            showSection('job-section');
-        }
+        function selectLine(lineName) { selectedLine = lineName; document.getElementById('selected-line-display').innerText = selectedLine; showSection('job-section'); }
 
         function selectJob(jobName) {
             selectedJob = jobName;
-            document.getElementById('final-line-display').innerText = selectedLine;
-            document.getElementById('final-job-display').innerText = selectedJob;
-            document.getElementById('pdf-line-display').innerText = selectedLine;
-            document.getElementById('pdf-job-display').innerText = selectedJob;
+            document.getElementById('final-line-display').innerText = selectedLine; document.getElementById('final-job-display').innerText = selectedJob;
+            document.getElementById('pdf-line-display').innerText = selectedLine; document.getElementById('pdf-job-display').innerText = selectedJob;
 
-            const builderPanel = document.getElementById('builder-panel');
-            const previewPanel = document.getElementById('preview-panel');
-            
-            if (currentUser && currentUser.role === 'ADMIN') {
-                builderPanel.classList.remove('hidden');
-                previewPanel.classList.remove('lg:col-span-12'); previewPanel.classList.add('lg:col-span-7');
-            } else {
-                builderPanel.classList.add('hidden');
-                previewPanel.classList.remove('lg:col-span-7'); previewPanel.classList.add('lg:col-span-12');
-            }
+            const builderPanel = document.getElementById('builder-panel'); const previewPanel = document.getElementById('preview-panel');
+            if (currentUser && currentUser.role === 'ADMIN') { builderPanel.classList.remove('hidden'); previewPanel.classList.remove('lg:col-span-12'); previewPanel.classList.add('lg:col-span-7'); } 
+            else { builderPanel.classList.add('hidden'); previewPanel.classList.remove('lg:col-span-7'); previewPanel.classList.add('lg:col-span-12'); }
 
-            loadTemplateFromStorage(selectedJob);
-            showSection('checksheet-section');
+            loadTemplateFromCloud(selectedJob); showSection('checksheet-section');
         }
 
-        // --- 3. Persistent เทมเพลต ---
-        function loadTemplateFromStorage(jobName) {
-            const localKey = `template_cache_${jobName}`;
-            const cached = localStorage.getItem(localKey);
-            if (cached) {
-                checksheetData = JSON.parse(cached);
-            } else {
+        // --- 3. [แก้ไขแมตช์ตาม Line + กลุ่มงาน] Cloud Template Isolated System ---
+        function loadTemplateFromCloud(jobName) {
+            const webhookUrl = document.getElementById('webhook-url').value.trim();
+            
+            // 🎯 [แก้ไขเพิ่มเติม] ยิงพ่วงรหัส linename ไปให้ Power Automate กรองไฟล์แยกเครื่อง
+            fetch(webhookUrl, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ action: "load_template", linename: selectedLine, jobname: jobName })
+            })
+            .then(res => res.json())
+            .then(cloudTemplate => {
+                if (cloudTemplate && Array.isArray(cloudTemplate)) { checksheetData = cloudTemplate; } 
+                else { loadLocalTemplateFallback(selectedLine, jobName); }
+                renderBuilder(); renderPreview();
+            })
+            .catch(err => {
+                loadLocalTemplateFallback(selectedLine, jobName); renderBuilder(); renderPreview();
+            });
+        }
+
+        function loadLocalTemplateFallback(lineName, jobName) {
+            const cached = localStorage.getItem(`template_cache_${lineName}_${jobName}`);
+            if (cached) { checksheetData = JSON.parse(cached); } else {
                 checksheetData = [
                     {
-                        id: 'm_init_' + Date.now(), title: `หัวข้อตรวจสอบพื้นฐาน - ${jobName}`, type: 'checkbox',
+                        id: 'm_init_' + Date.now(), title: `หัวข้อตรวจสอบ (${lineName}) - ${jobName}`, type: 'checkbox',
                         subTopics: [
-                            { id: 's_init_1', title: 'ตรวจเช็คความผิดปกติภายนอกทั่วไป', type: 'checkbox' },
-                            { id: 's_init_2', title: 'บันทึกหมายเหตุเพิ่มเติมเกี่ยวกับงาน', type: 'text_long' }
+                            { id: 's_init_1', title: 'ตรวจเช็คความผิดปกติภายนอกทั่วไปของอุปกรณ์', type: 'checkbox' },
+                            { id: 's_init_2', title: 'บันทึกคอมเมนต์ผลการซ่อมบำรุงหน้างาน', type: 'text_long' }
                         ]
                     }
                 ];
             }
-            renderBuilder(); renderPreview();
         }
 
-        function saveTemplateToStorage() {
-            const localKey = `template_cache_${selectedJob}`;
-            localStorage.setItem(localKey, JSON.stringify(checksheetData));
-            alert(`🎉 บันทึกเทมเพลตล่าสุดของ "${selectedJob}" สำเร็จ!`);
+        function saveTemplateToCloud() {
+            const webhookUrl = document.getElementById('webhook-url').value.trim();
+            localStorage.setItem(`template_cache_${selectedLine}_${selectedJob}`, JSON.stringify(checksheetData));
+            
+            // 🎯 [แก้ไขเพิ่มเติม] ส่ง linename พ่วงร่วมขบวน ยิงตรงเข้าตำรวจจราจรหน้าระบบ
+            fetch(webhookUrl, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ 
+                    action: "save_template", 
+                    linename: selectedLine,
+                    jobname: selectedJob, 
+                    data: checksheetData 
+                })
+            })
+            .then(response => {
+                alert(`☁️ บันทึกแม่แบบงานสำเร็จ!\nเทมเพลตสำหรับไลน์ "${selectedLine}" ของกลุ่ม "${selectedJob}" อัปเดตขึ้นคลาวด์แยกอิสระเรียบร้อยครับ`);
+            })
+            .catch(error => {
+                alert(`💾 บันทึกสำเร็จชั่วคราวใน Cache เครื่องคอมพิวเตอร์ของคุณ`);
+            });
             renderPreview();
         }
 
         // --- 4. Form Builder Engine ---
-        function addMainTopic() { 
-            checksheetData.push({ id: 'main_' + Date.now(), title: 'หัวข้อหลักใหม่', type: 'text_short', subTopics: [] }); 
-            renderBuilder(); renderPreview(); 
-        }
-        function addSubTopic(mainId) { 
-            const m = checksheetData.find(m => m.id === mainId); 
-            if (m) { m.subTopics.push({ id: 'sub_' + Date.now(), title: 'หัวข้อย่อยใหม่', type: 'text_short' }); renderBuilder(); renderPreview(); } 
-        }
+        function addMainTopic() { checksheetData.push({ id: 'main_' + Date.now(), title: 'หัวข้อหลักใหม่', type: 'text_short', subTopics: [] }); renderBuilder(); renderPreview(); }
+        function addSubTopic(mainId) { const m = checksheetData.find(m => m.id === mainId); if (m) { m.subTopics.push({ id: 'sub_' + Date.now(), title: 'หัวข้อย้อยใหม่', type: 'text_short' }); renderBuilder(); renderPreview(); } }
         function deleteMainTopic(mainId) { checksheetData = checksheetData.filter(m => m.id !== mainId); renderBuilder(); renderPreview(); }
         function deleteSubTopic(mainId, subId) { const m = checksheetData.find(m => m.id === mainId); if (m) { m.subTopics = m.subTopics.filter(s => s.id !== subId); renderBuilder(); renderPreview(); } }
         function updateValue(mId, sId, f, v) { const m = checksheetData.find(x => x.id === mId); if (m) { if (sId === null) m[f] = v; else { const s = m.subTopics.find(x => x.id === sId); if (s) s[f] = v; } } }
@@ -444,33 +436,12 @@
             const c = document.getElementById('builder-container'); c.innerHTML = '';
             checksheetData.forEach((main) => {
                 const div = document.createElement('div'); div.className = 'bg-gray-50 p-3 rounded-lg border border-gray-300 space-y-2 shadow-sm';
-                div.innerHTML = `
-                    <div class="flex gap-1 items-center">
-                        <input type="text" value="${main.title}" oninput="updateValue('${main.id}', null, 'title', this.value)" class="flex-1 p-1.5 border rounded text-xs focus:ring-1 focus:ring-blue-500 outline-none">
-                        <select onchange="updateValue('${main.id}', null, 'type', this.value); renderPreview();" class="p-1.5 border rounded bg-white text-[11px] focus:ring-1 focus:ring-blue-500 outline-none">
-                            <option value="text_short" ${main.type === 'text_short' ? 'selected' : ''}>Text สั้น</option>
-                            <option value="text_long" ${main.type === 'text_long' ? 'selected' : ''}>Text ยาว</option>
-                            <option value="checkbox" ${main.type === 'checkbox' ? 'selected' : ''}>Checkbox</option>
-                        </select>
-                        <button onclick="deleteMainTopic('${main.id}')" class="text-red-500 font-bold px-2 hover:text-red-700 text-sm">🗑️</button>
-                    </div>
-                    <div class="pl-4 border-l-2 border-dashed border-gray-300 space-y-1.5" id="sub-b-${main.id}"></div>
-                    <button onclick="addSubTopic('${main.id}')" class="text-[10px] text-blue-600 hover:text-blue-800 font-semibold block pl-4 mt-1">➕ เพิ่มหัวข้อย่อย (Sub title)</button>
-                `;
+                div.innerHTML = `<div class="flex gap-1 items-center"><input type="text" value="${main.title}" oninput="updateValue('${main.id}', null, 'title', this.value)" class="flex-1 p-1.5 border rounded text-xs focus:ring-1 focus:ring-blue-500 outline-none"><select onchange="updateValue('${main.id}', null, 'type', this.value); renderPreview();" class="p-1.5 border rounded bg-white text-[11px] focus:ring-1 focus:ring-blue-500 outline-none"><option value="text_short" ${main.type === 'text_short' ? 'selected' : ''}>Text สั้น</option><option value="text_long" ${main.type === 'text_long' ? 'selected' : ''}>Text ยาว</option><option value="checkbox" ${main.type === 'checkbox' ? 'selected' : ''}>Checkbox</option></select><button onclick="deleteMainTopic('${main.id}')" class="text-red-500 font-bold px-2 hover:text-red-700 text-sm">🗑️</button></div><div class="pl-4 border-l-2 border-dashed border-gray-300 space-y-1.5" id="sub-b-${main.id}"></div><button onclick="addSubTopic('${main.id}')" class="text-[10px] text-blue-600 hover:text-blue-800 font-semibold block pl-4 mt-1">➕ เพิ่มหัวข้อย่อย (Sub title)</button>`;
                 c.appendChild(div);
-                
                 const sc = document.getElementById(`sub-b-${main.id}`);
                 main.subTopics.forEach((sub) => {
                     const sd = document.createElement('div'); sd.className = 'flex gap-1 items-center bg-white p-1.5 rounded border border-gray-200 shadow-sm';
-                    sd.innerHTML = `
-                        <input type="text" value="${sub.title}" oninput="updateValue('${main.id}', '${sub.id}', 'title', this.value)" class="flex-1 p-1 border rounded text-[11px] focus:ring-1 focus:ring-blue-500 outline-none">
-                        <select onchange="updateValue('${main.id}', '${sub.id}', 'type', this.value); renderPreview();" class="p-1 border rounded bg-white text-[10px] focus:ring-1 focus:ring-blue-500 outline-none">
-                            <option value="text_short" ${sub.type === 'text_short' ? 'selected' : ''}>Text สั้น</option>
-                            <option value="text_long" ${sub.type === 'text_long' ? 'selected' : ''}>Text ยาว</option>
-                            <option value="checkbox" ${sub.type === 'checkbox' ? 'selected' : ''}>Checkbox</option>
-                        </select>
-                        <button onclick="deleteSubTopic('${main.id}', '${sub.id}')" class="text-red-400 hover:text-red-600 text-xs px-1">🗑️</button>
-                    `;
+                    sd.innerHTML = `<input type="text" value="${sub.title}" oninput="updateValue('${main.id}', '${sub.id}', 'title', this.value)" class="flex-1 p-1 border rounded text-[11px] focus:ring-1 focus:ring-blue-500 outline-none"><select onchange="updateValue('${main.id}', '${sub.id}', 'type', this.value); renderPreview();" class="p-1 border rounded bg-white text-[10px] focus:ring-1 focus:ring-blue-500 outline-none"><option value="text_short" ${sub.type === 'text_short' ? 'selected' : ''}>Text สั้น</option><option value="text_long" ${sub.type === 'text_long' ? 'selected' : ''}>Text ยาว</option><option value="checkbox" ${sub.type === 'checkbox' ? 'selected' : ''}>Checkbox</option></select><button onclick="deleteSubTopic('${main.id}', '${sub.id}')" class="text-red-400 hover:text-red-600 text-xs px-1">🗑️</button>`;
                     sc.appendChild(sd);
                 });
             });
@@ -478,19 +449,11 @@
 
         function renderPreview() {
             const f = document.getElementById('preview-form'); f.innerHTML = '<div id="preview-container" class="space-y-3"></div>';
-            const pc = document.getElementById('preview-container');
-            if (checksheetData.length === 0) { pc.innerHTML = '<div class="text-gray-400 italic text-center py-8">ไม่มีหัวข้อการตรวจเช็ค</div>'; return; }
+            const pc = document.getElementById('preview-container'); if (checksheetData.length === 0) { pc.innerHTML = '<div class="text-gray-400 italic text-center py-8">ไม่มีหัวข้อการตรวจเช็ค</div>'; return; }
             checksheetData.forEach((main) => {
-                // 🎯 บังคับให้แต่ละ Block ป้องกันการโดนตัดแบ่งครึ่งบรรทัดระหว่างหน้า (Page Break Avoid)
-                const div = document.createElement('div'); 
-                div.className = "p-3 bg-slate-50 rounded border border-gray-200 shadow-sm";
-                div.setAttribute("style", "page-break-inside: avoid; break-inside: avoid;");
-                
-                let mHtml = getInputHtml(main.id, main.title, main.type, 'main');
-                let sHtml = '';
-                main.subTopics.forEach(sub => { 
-                    sHtml += `<div class="pl-4 mt-2 pt-2 border-t border-gray-200" style="page-break-inside: avoid; break-inside: avoid;">${getInputHtml(sub.id, sub.title, sub.type, 'sub')}</div>`; 
-                });
+                const div = document.createElement('div'); div.className = "p-3 bg-slate-50 rounded border border-gray-200 shadow-sm"; div.setAttribute("style", "page-break-inside: avoid; break-inside: avoid;");
+                let mHtml = getInputHtml(main.id, main.title, main.type, 'main'); let sHtml = '';
+                main.subTopics.forEach(sub => { sHtml += `<div class="pl-4 mt-2 pt-2 border-t border-gray-200" style="page-break-inside: avoid; break-inside: avoid;">${getInputHtml(sub.id, sub.title, sub.type, 'sub')}</div>`; });
                 div.innerHTML = mHtml + sHtml; pc.appendChild(div);
             });
         }
@@ -503,138 +466,67 @@
             return '';
         }
 
-        // --- 5. ฟังก์ชัน Flatten DOM + ปลดล็อก Scrollbar ซ่อนข้อความ + ยิง API (สมบูรณ์ 100%) ---
-        function generateAndUploadViaAPI() {
-            const engineer = document.getElementById('eng-name').value.trim();
-            const webhookUrl = document.getElementById('webhook-url').value.trim();
+        // --- 5. Flatten ข้อมูลสดลงกระดาษจริงป้องกันอาการภาพขาว ---
+        function executePdfRenderProcess(isLocalDownloadMode = false) {
+            const engineer = document.getElementById('eng-name').value.trim(); const webhookUrl = document.getElementById('webhook-url').value.trim();
+            if (!engineer) { alert("⚠️ ปฏิเสธการทำงาน: กรุณากรอกชื่อวิศวกรผู้ตรวจเช็คบนหัวใบงานฝั่งขวาก่อนครับ"); return; }
 
-            if (!engineer) { 
-                alert("⚠️ ปฏิเสธการบันทึก: กรุณากรอกชื่อวิศวกรผู้ตรวจเช็คก่อนส่งออกไฟล์ครับ"); 
-                return; 
+            const dateStr = new Date().toISOString().slice(0,10); const fileName = `Checksheet_${selectedLine}_${dateStr}_${selectedJob}.pdf`;
+            let fileHistory = JSON.parse(localStorage.getItem('sm_file_history') || '[]'); let isOverwrite = false;
+
+            if (!isLocalDownloadMode && fileHistory.includes(fileName)) {
+                const confirmOverwrite = confirm(`⚠️ แจ้งเตือนไฟล์ซ้ำ: ไฟล์ "${fileName}" นี้เคยถูกส่งเข้าระบบไปแล้วในวันนี้ครับ\n\nคุณต้องการยืนยันบันทึกไฟล์ซ้ำใหม่เพื่อเขียนทับหรือไม่?`);
+                if (!confirmOverwrite) return; isOverwrite = true;
             }
 
-            const dateStr = new Date().toISOString().slice(0,10);
-            const fileName = `Checksheet_${selectedLine}_${dateStr}_${selectedJob}.pdf`;
+            alert("🔄 ระบบกำลังรันโหมด Sandbox ป้องกันภาพขาวโพลนและดึงข้อมูลส่วนคอมเมนต์ยาวล้น...");
+            const targetElement = document.getElementById('pdf-area');
 
-            // ระบบเช็คไฟล์ซ้ำใน LocalHistory
-            let fileHistory = JSON.parse(localStorage.getItem('sm_file_history') || '[]');
-            let isOverwrite = false;
-
-            if (fileHistory.includes(fileName)) {
-                const confirmOverwrite = confirm(`⚠️ แจ้งเตือนไฟล์ซ้ำ: ไฟล์ "${fileName}" นี้เคยถูกบันทึกเข้าระบบไปแล้วในวันนี้ครับ\n\nคุณต้องการยืนยันบันทึกไฟล์ซ้ำใหม่เพื่อเขียนทับ (Overwrite) ไฟล์เดิมใน SharePoint หรือไม่?`);
-                if (!confirmOverwrite) {
-                    alert("🚫 ยกเลิกการนำส่งข้อมูลเรียบร้อย");
-                    return; 
-                }
-                isOverwrite = true;
-            }
-
-            alert("🔄 ระบบกำลังทำการขยายข้อมูล (Unlocking Scrollbars) และดึงเนื้อหาทั้งหมดเพื่อเจนเข้า PDF หน้าถัดไปให้อัตโนมัติ...");
-
-            // โคลนเอกสารเพื่อเอามาประมวลผลหลังบ้าน
-            const originalElement = document.getElementById('pdf-area');
-            const clonedElement = originalElement.cloneNode(true);
-
-            const originalInputs = originalElement.querySelectorAll('input, textarea');
-            const clonedInputs = clonedElement.querySelectorAll('input, textarea');
-
-            originalInputs.forEach((origInput, index) => {
-                const targetClone = clonedInputs[index];
-                if (!targetClone) return;
-                
-                const parent = targetClone.parentNode;
-                
-                if (origInput.type === 'checkbox') {
-                    const badge = document.createElement('span');
-                    badge.className = origInput.checked ? "text-green-600 font-bold text-xs" : "text-red-500 font-bold text-xs";
-                    badge.innerText = origInput.checked ? " ☑️ [ปกติ / ผ่าน] " : " 🔲 [ชำรุด / ไม่ผ่าน] ";
-                    parent.replaceChild(badge, targetClone);
-                } else {
-                    // แปลง Input/Textarea เป็นบล็อกข้อความธรรมดา รองรับข้อความยาวและการเคาะขึ้นบรรทัดใหม่
-                    const txtDiv = document.createElement('div');
-                    txtDiv.className = "p-1.5 bg-slate-50 border-b border-gray-300 text-xs text-gray-800 whitespace-pre-wrap w-full break-words";
-                    txtDiv.style.height = "auto";
-                    txtDiv.style.maxHeight = "none";
-                    txtDiv.style.overflow = "visible";
-                    txtDiv.innerText = origInput.value.trim() || "-";
-                    parent.replaceChild(txtDiv, targetClone);
-                }
-            });
-
-            // 🔥 [จุดแก้ไขเด็ดขาดเพื่อแก้ปัญหาค้างใน Scrollbar]:
-            // ปลดล็อกการจำกัดความสูงและสั่งแสดงผลแบบ Overflow Visible แก่ทุก Container ย่อยในแผ่นงานโคลน
-            clonedElement.style.height = "auto";
-            clonedElement.style.maxHeight = "none";
-            clonedElement.style.overflow = "visible";
-
-            const clonedForm = clonedElement.querySelector('#preview-form');
-            if (clonedForm) {
-                clonedForm.style.height = "auto";
-                clonedForm.style.maxHeight = "none";
-                clonedForm.style.overflow = "visible";
-                clonedForm.classList.remove('max-h-[42vh]', 'overflow-y-auto');
-            }
-            
-            const clonedContainer = clonedElement.querySelector('#preview-container');
-            if (clonedContainer) {
-                clonedContainer.style.height = "auto";
-                clonedContainer.style.maxHeight = "none";
-                clonedContainer.style.overflow = "visible";
-            }
-
-            // นำตัวโคลนไปติดบน DOM แบบซ่อนสายตาผู้ใช้เพื่อให้เอนจิ้นคำนวณส่วนขยายได้เต็มที่
-            clonedElement.style.position = 'absolute';
-            clonedElement.style.top = '0';
-            clonedElement.style.left = '0';
-            clonedElement.style.zIndex = '-9999';
-            clonedElement.style.width = '190mm'; // ล็อกความกว้างหน้ากระดาษ A4 มาตรฐาน
-            clonedElement.style.opacity = '1';
-            document.body.appendChild(clonedElement);
-
-            // คอนฟิกการแยกหน้าอัตโนมัติเมื่อข้อมูลล้น (Multi-page Smart Breaks)
             const pdfConfig = {
-                margin:       10,
-                filename:     fileName,
-                image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2, useCORS: true, logging: false, scrollY: 0 },
-                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
-                pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
+                margin: 10, filename: fileName, image: { type: 'jpeg', quality: 0.98 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                pagebreak: { mode: ['css', 'legacy'] },
+                html2canvas: { 
+                    scale: 2, useCORS: true, logging: false, scrollY: 0, backgroundColor: '#ffffff',
+                    onclone: function(clonedDoc) {
+                        const clonedPdfArea = clonedDoc.getElementById('pdf-area'); const clonedForm = clonedDoc.getElementById('preview-form'); const clonedContainer = clonedDoc.getElementById('preview-container');
+                        if (clonedPdfArea) { clonedPdfArea.style.height = "auto"; clonedPdfArea.style.maxHeight = "none"; clonedPdfArea.style.overflow = "visible"; }
+                        if (clonedForm) { clonedForm.style.height = "auto"; clonedForm.style.maxHeight = "none"; clonedForm.style.overflow = "visible"; clonedForm.classList.remove('max-h-[42vh]', 'overflow-y-auto'); }
+                        if (clonedContainer) { clonedContainer.style.height = "auto"; clonedContainer.style.maxHeight = "none"; clonedContainer.style.overflow = "visible"; }
+
+                        const originalElement = document.getElementById('pdf-area'); const originalInputs = originalElement.querySelectorAll('input, textarea'); const clonedInputs = clonedPdfArea.querySelectorAll('input, textarea');
+                        originalInputs.forEach((origInput, index) => {
+                            const targetClone = clonedInputs[index]; if (!targetClone) return; const parent = targetClone.parentNode;
+                            if (origInput.type === 'checkbox') {
+                                const badge = clonedDoc.createElement('span'); badge.className = origInput.checked ? "text-green-600 font-bold text-xs" : "text-red-500 font-bold text-xs";
+                                badge.innerText = origInput.checked ? " ☑️ [ปกติ / ผ่าน] " : " 🔲 [ชำรุด / ไม่ผ่าน] "; parent.replaceChild(badge, targetClone);
+                            } else {
+                                const txtDiv = clonedDoc.createElement('div'); txtDiv.className = "p-1.5 bg-slate-50 border-b border-gray-300 text-xs text-gray-800 whitespace-pre-wrap w-full break-words text-left";
+                                txtDiv.style.height = "auto"; txtDiv.style.maxHeight = "none"; txtDiv.style.overflow = "visible"; txtDiv.innerText = origInput.value.trim() || "-"; parent.replaceChild(txtDiv, targetClone);
+                            }
+                        });
+                    }
+                }
             };
 
-            // ดำเนินการแคปเอกสารตัวโคลนที่ถูก Unlocked ข้อมูลแล้ว
-            html2pdf().set(pdfConfig).from(clonedElement).toPdf().output('datauristring').then(function(pdfBase64Text) {
-                // ลบตัวโคลนทิ้งทันทีเมื่อทำงานเสร็จ
-                document.body.removeChild(clonedElement);
+            if (isLocalDownloadMode) { html2pdf().set(pdfConfig).from(targetElement).save(); } 
+            else {
+                html2pdf().set(pdfConfig).from(targetElement).toPdf().output('datauristring').then(function(pdfBase64Text) {
+                    const pureBase64 = pdfBase64Text.split(',')[1];
+                    if (!pureBase64 || pureBase64.length < 100) { alert("❌ เกิดปัญหาความสมบูรณ์ของไฟล์ กรุณาส่งซ้ำอีกครั้งครับ"); return; }
 
-                const pureBase64 = pdfBase64Text.split(',')[1];
-                
-                const jsonPayload = {
-                    filename: fileName,
-                    filecontent: pureBase64,
-                    overwrite: isOverwrite
-                };
-
-                fetch(webhookUrl, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(jsonPayload)
-                })
-                .then(response => {
-                    if (response.ok) {
-                        if (!fileHistory.includes(fileName)) {
-                            fileHistory.push(fileName);
-                            localStorage.setItem('sm_file_history', JSON.stringify(fileHistory));
-                        }
-                        alert(`🎉 นำส่งสำเร็จ!\nบันทึกไฟล์เรียบร้อย: ${fileName}\n(สถานะ: ${isOverwrite ? 'เขียนทับไฟล์เดิม':'บันทึกไฟล์ใหม่สะสม'})`);
-                    } else {
-                        alert("❌ เกิดข้อผิดพลาด: เซิร์ฟเวอร์ปฏิเสธโครงสร้างข้อความ JSON");
-                    }
-                })
-                .catch(error => {
-                    console.error("Error: ", error);
-                    alert("❌ ติดต่อเซิร์ฟเวอร์ไม่ได้ โปรดตรวจสอบอินเทอร์เน็ตหน้างาน");
+                    fetch(webhookUrl, {
+                        method: "POST", headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ action: "upload_pdf", filename: fileName, filecontent: pureBase64, overwrite: isOverwrite })
+                    })
+                    .then(response => {
+                        if (response.ok) {
+                            if (!fileHistory.includes(fileName)) { fileHistory.push(fileName); localStorage.setItem('sm_file_history', JSON.stringify(fileHistory)); }
+                            alert(`🎉 นำส่งรายงานเข้าคลังสำเร็จ!\nบันทึกไฟล์เรียบร้อย: ${fileName}`);
+                        } else { alert("❌ เซิร์ฟเวอร์ปฏิเสธการบันทึกไฟล์"); }
+                    })
+                    .catch(error => { alert("❌ สัญญาณอินเทอร์เน็ตหน้างานขาดหาย ไม่สามารถเชื่อมต่อคลาวด์ได้"); });
                 });
-            });
+            }
         }
     </script>
 </body>
